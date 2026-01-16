@@ -76,14 +76,15 @@ npm install
 expo r -c
 ```
 
-4. Otvoriti **Expo Go** na mobitelu (mobitel mora biti na istoj Wi-Fi mreži).
-5. `.env` mora sadržavati ispravan IP računala gdje backend sluša:
+4. Skenirati QR KOD
+5. Otvoriti **Expo Go** na mobitelu (mobitel mora biti na istoj Wi-Fi mreži).
+6. `.env` mora sadržavati ispravan IP računala gdje backend sluša:
 
 ```
 API_URL=http://192.168.x.x:8080/api
 ```
 
-6. Aplikacija sada može dohvatiti, dodavati, uređivati i brisati knjige preko REST API-ja.
+7. Aplikacija sada može dohvatiti, dodavati, uređivati i brisati knjige preko REST API-ja.
 
 ---
 
