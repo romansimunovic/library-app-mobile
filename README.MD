@@ -118,7 +118,6 @@ API_URL=http://192.168.x.x:8080/api
   * Predlaganje finalnog dizajna i UX-a
   * Pisanje API sloja (`api.js`) i `.env` konfiguracije
 * Sve funkcionalnosti i logika su ručno testirane i potvrđene.
-* AI korišten kao pomoćno sredstvo, a ne kao generator cijelog rješenja.
 
 ---
 
@@ -139,8 +138,3 @@ DELETE /api/books/{bookId}
 * BookRequest/BookResponse su definirani prema zadatku (bez BaseEntity polja).
 
 ---
-
-## Zaključak
-
-Ova aplikacija zadovoljava **sve zahtjeve profesora**: funkcionalne, tehničke i UX.
-Mobilni app i backend su **povezani preko REST API-ja** i testirani s Expo Go i Postmanom.
