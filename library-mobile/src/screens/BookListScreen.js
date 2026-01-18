@@ -1,4 +1,3 @@
-// src/screens/BookListScreen.js
 import React, { useState, useEffect } from 'react';
 import { 
   View, FlatList, Alert, Text, StyleSheet, TouchableOpacity, TextInput 

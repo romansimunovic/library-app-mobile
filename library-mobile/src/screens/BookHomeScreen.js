@@ -1,4 +1,3 @@
-// src/screens/BookHomeScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Platform } from 'react-native';
 import { getBooks } from '../api/api';

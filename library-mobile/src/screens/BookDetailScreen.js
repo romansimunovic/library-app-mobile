@@ -1,4 +1,3 @@
-// src/screens/BookFormScreen.js
 import React, { useState, useEffect } from 'react';
 import { 
   View, TextInput, Switch, Alert, Text, ScrollView, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback 
