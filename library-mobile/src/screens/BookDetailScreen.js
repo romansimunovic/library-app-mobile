@@ -1,125 +1,220 @@
-// BookDetailScreen.js - Modernizirani stilovi
+// src/screens/BookFormScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, Alert, StyleSheet } from 'react-native';
-import { getBookById } from '../api/api';
+import { 
+  View, TextInput, Switch, Alert, Text, ScrollView, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback 
+} from 'react-native';
+import { createBook, updateBook, getBookById } from '../api/api';
 
-export default function BookDetailScreen({ route }) {
-  const { bookId } = route.params;
-  const [book, setBook] = useState(null);
-  const [loading, setLoading] = useState(true);
+/**
+ * Ekran za dodavanje i uređivanje knjiga
+ * Validacija: obavezna polja i osnovna provjera ISBN-a
+ * Vizualno isticanje pogrešnih unosa
+ */
+export default function BookFormScreen({ route, navigation }) {
+  const bookId = route.params?.bookId;
 
+  // Polja forme
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [isbn, setIsbn] = useState('');
+  const [publishedYear, setPublishedYear] = useState('');
+  const [available, setAvailable] = useState(true);
+
+  // Polja za validaciju
+  const [errors, setErrors] = useState({});
+
+  // Dohvat podataka ako je edit
   useEffect(() => {
-    getBookById(bookId)
-      .then(data => setBook(data))
-      .catch(err => Alert.alert('Greška', err.message))
-      .finally(() => setLoading(false));
+    if (bookId) {
+      getBookById(bookId)
+        .then(book => {
+          setTitle(book.title);
+          setAuthor(book.author);
+          setIsbn(book.isbn || '');
+          setPublishedYear(book.publishedYear?.toString() || '');
+          setAvailable(book.available);
+        })
+        .catch(err => Alert.alert('Greška', err.message));
+    }
   }, [bookId]);
 
-  if (loading) return <ActivityIndicator style={styles.loader} size="large" />;
+  /** 
+   * Provjera valjanosti unosa
+   * @returns boolean - true ako su svi unosi ispravni
+   */
+  const validate = () => {
+    const newErrors = {};
+    if (!title.trim()) newErrors.title = 'Naslov je obavezan';
+    if (!author.trim()) newErrors.author = 'Autor je obavezan';
+
+    // osnovna provjera ISBN formata: npr. 978-3-16-148410-0
+    if (isbn.trim() && !/^\d{3}-\d-\d{2}-\d{6}-\d$/.test(isbn.trim())) {
+      newErrors.isbn = 'ISBN nije u ispravnom formatu';
+    }
+
+    // opcionalna provjera godine
+    if (publishedYear.trim() && (isNaN(publishedYear) || parseInt(publishedYear) <= 0)) {
+      newErrors.publishedYear = 'Unesite valjanu godinu';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  /**
+   * Spremanje knjige (dodavanje ili update)
+   */
+  const handleSave = async () => {
+    if (!validate()) return; // ako nisu validni podaci, ne ide dalje
+
+    const bookRequest = {
+      title: title.trim(),
+      author: author.trim(),
+      isbn: isbn.trim() || null,
+      publishedYear: publishedYear.trim() ? parseInt(publishedYear) : null,
+      available,
+    };
+
+    try {
+      if (bookId) {
+        await updateBook(bookId, bookRequest);
+        Alert.alert('Uspjeh', `Knjiga "${title}" je ažurirana`);
+      } else {
+        await createBook(bookRequest);
+        Alert.alert('Uspjeh', `Knjiga "${title}" je dodana`);
+      }
+      navigation.navigate('BookList', { refresh: true });
+    } catch (error) {
+      Alert.alert('Greška', error.message);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{book.title}</Text>
-        <Text style={styles.subtitle}>{book.author}</Text>
-      </View>
-      
-      <View style={styles.details}>
-        <View style={styles.detailRow}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ScrollView 
+        style={styles.container}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+      >
+        <Text style={styles.header}>{bookId ? 'Uredi knjigu' : 'Dodaj knjigu'}</Text>
+
+        {/* Naslov */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Naslov</Text>
+          <TextInput 
+            value={title} 
+            onChangeText={setTitle} 
+            style={[styles.input, errors.title && styles.inputError]} 
+            placeholder="Unesite naslov"
+            placeholderTextColor="#999"
+          />
+          {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
+        </View>
+
+        {/* Autor */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Autor</Text>
+          <TextInput 
+            value={author} 
+            onChangeText={setAuthor} 
+            style={[styles.input, errors.author && styles.inputError]} 
+            placeholder="Unesite autora"
+            placeholderTextColor="#999"
+          />
+          {errors.author && <Text style={styles.errorText}>{errors.author}</Text>}
+        </View>
+
+        {/* ISBN */}
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>ISBN</Text>
-          <Text style={styles.value}>{book.isbn || '-'}</Text>
+          <TextInput 
+            value={isbn} 
+            onChangeText={setIsbn} 
+            style={[styles.input, errors.isbn && styles.inputError]} 
+            placeholder="npr. 978-3-16-148410-0"
+            placeholderTextColor="#999"
+          />
+          {errors.isbn && <Text style={styles.errorText}>{errors.isbn}</Text>}
         </View>
-        
-        <View style={styles.detailRow}>
+
+        {/* Godina */}
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Godina</Text>
-          <Text style={styles.value}>{book.publishedYear || '-'}</Text>
+          <TextInput
+            value={publishedYear}
+            onChangeText={setPublishedYear}
+            keyboardType="numeric"
+            style={[styles.input, errors.publishedYear && styles.inputError]} 
+            placeholder="npr. 2023"
+            placeholderTextColor="#999"
+          />
+          {errors.publishedYear && <Text style={styles.errorText}>{errors.publishedYear}</Text>}
         </View>
-        
-        <View style={styles.statusRow}>
-          <Text style={styles.label}>Status</Text>
-          <View style={[styles.status, book.available ? styles.available : styles.unavailable]}>
-            <Text style={styles.statusText}>{book.available ? 'Dostupna' : 'Zadana'}</Text>
-          </View>
+
+        {/* Dostupnost */}
+        <View style={styles.switchGroup}>
+          <Text style={styles.switchLabel}>Dostupna</Text>
+          <Switch 
+            value={available} 
+            onValueChange={setAvailable} 
+            trackColor={{ true: '#0a6734', false: '#721c24' }}
+            thumbColor="#ffffff"
+          />
         </View>
-      </View>
-    </View>
+
+        {/* Spremi */}
+        <TouchableOpacity 
+          style={styles.saveButton} 
+          onPress={() => {
+            Keyboard.dismiss();
+            handleSave();
+          }}
+        >
+          <Text style={styles.saveButtonText}>{bookId ? 'Ažuriraj' : 'Kreiraj'}</Text>
+        </TouchableOpacity>
+
+        {/* Obriši ako edit */}
+        {bookId && (
+          <TouchableOpacity 
+            style={styles.deleteButton} 
+            onPress={() => Alert.alert(
+              'Potvrda', 
+              'Jeste li sigurni da želite obrisati ovu knjigu?',
+              [
+                { text: 'Odustani', style: 'cancel' },
+                { text: 'Obriši', style: 'destructive', onPress: async () => {
+                  try {
+                    await deleteBook(bookId);
+                    Alert.alert('Uspjeh', `Knjiga "${title}" je obrisana`);
+                    navigation.navigate('BookList', { refresh: true });
+                  } catch (error) {
+                    Alert.alert('Greška', error.message);
+                  }
+                } }
+              ]
+            )}
+          >
+            <Text style={styles.deleteButtonText}>Obriši knjigu</Text>
+          </TouchableOpacity>
+        )}
+
+      </ScrollView>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f23'
-  },
-  header: {
-    padding: 32,
-    paddingTop: 60,
-    backgroundColor: '#1a1a2e',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#ffffff',
-    lineHeight: 34,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#a0a0cc',
-  },
-  details: {
-    flex: 1,
-    padding: 30,
-    gap: 20,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#a0a0cc',
-  },
-  value: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  status: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  available: {
-    backgroundColor: '#0a6734',
-  },
-  unavailable: {
-    backgroundColor: '#721c24',
-  },
-  statusText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#0f0f23',
-  },
+  container: { flex: 1, backgroundColor: '#0f0f23' },
+  header: { fontSize: 28, fontWeight: '800', color: '#ffffff', textAlign: 'center', marginVertical: 32 },
+  inputGroup: { marginBottom: 24, paddingHorizontal: 24 },
+  label: { fontSize: 16, fontWeight: '600', color: '#a0a0cc', marginBottom: 8 },
+  input: { backgroundColor: '#1a1a2e', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 20, fontSize: 16, color: '#ffffff', borderWidth: 1, borderColor: '#2a2a3e' },
+  inputError: { borderColor: '#c00' }, // crveni border za pogrešan unos
+  errorText: { color: '#c00', marginTop: 4, fontSize: 12 },
+  switchGroup: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 40 },
+  switchLabel: { fontSize: 16, fontWeight: '600', color: '#a0a0cc' },
+  saveButton: { backgroundColor: '#0a6734', marginHorizontal: 24, borderRadius: 16, paddingVertical: 18, alignItems: 'center', marginBottom: 16 },
+  saveButtonText: { color: '#ffffff', fontSize: 18, fontWeight: '700' },
+  deleteButton: { backgroundColor: '#721c24', marginHorizontal: 24, borderRadius: 16, paddingVertical: 18, alignItems: 'center' },
+  deleteButtonText: { color: '#ffffff', fontSize: 18, fontWeight: '700' },
 });

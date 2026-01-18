@@ -11,7 +11,7 @@ export default function BooksStack() {
     <Stack.Navigator initialRouteName="BookList">
       <Stack.Screen name="BookList" component={BookListScreen} options={{ title: 'Knjige' }} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ title: 'Detalji knjige' }} />
-      <Stack.Screen name="BookForm" component={BookFormScreen} options={{ title: 'Uredi / Dodaj knjigu' }} />
+      <Stack.Screen name="BookForm" component={BookFormScreen} options={{ title: 'Dodaj / Uredi knjigu' }} />
     </Stack.Navigator>
   );
 }
