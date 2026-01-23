@@ -1,21 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, FlatList, Alert, Text, StyleSheet, TouchableOpacity, TextInput 
+  View, FlatList, Alert, Text, StyleSheet, TouchableOpacity, TextInput, Modal, TouchableWithoutFeedback 
 } from 'react-native';
 import BookItem from '../components/BookItem';
 import { getBooks, deleteBook, searchBooks } from '../api/api';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 export default function BookListScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [sortNewest, setSortNewest] = useState(true);
+  const [sortOption, setSortOption] = useState('Najnovije');
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const fetchBooks = async () => {
     try {
       setLoading(true);
       let data = search ? await searchBooks(search) : await getBooks();
-      data.sort((a, b) => sortNewest ? b.publishedYear - a.publishedYear : a.publishedYear - b.publishedYear);
+
+      switch(sortOption) {
+        case 'Najnovije': data.sort((a,b)=>b.publishedYear - a.publishedYear); break;
+        case 'Najstarije': data.sort((a,b)=>a.publishedYear - b.publishedYear); break;
+        case 'Abecedno A-Z': data.sort((a,b)=>a.title.localeCompare(b.title)); break;
+        case 'Abecedno Z-A': data.sort((a,b)=>b.title.localeCompare(a.title)); break;
+      }
+
       setBooks(data);
     } catch (error) {
       Alert.alert('Greška', error.message);
@@ -24,10 +34,7 @@ export default function BookListScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    fetchBooks();
-  }, [sortNewest, search]);
-
+  useEffect(() => { fetchBooks(); }, [sortOption, search]);
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', fetchBooks);
     return unsubscribe;
@@ -39,21 +46,12 @@ export default function BookListScreen({ navigation }) {
       'Jeste li sigurni da želite obrisati knjigu?',
       [
         { text: 'Ne', style: 'cancel' },
-        {
-          text: 'Da',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteBook(id);
-              fetchBooks();
-            } catch (error) {
-              Alert.alert('Greška', error.message);
-            }
-          },
-        },
+        { text: 'Da', style: 'destructive', onPress: async () => { await deleteBook(id); fetchBooks(); } },
       ]
     );
   };
+
+  const SORT_OPTIONS = ['Najnovije','Najstarije','Abecedno A-Z','Abecedno Z-A'];
 
   return (
     <View style={styles.container}>
@@ -62,30 +60,72 @@ export default function BookListScreen({ navigation }) {
         <Text style={styles.headerTitle}>Knjige</Text>
       </View>
 
-      {/* SEARCH, SORT, ADD */}
+      {/* ACTION ROW */}
       <View style={styles.actionRow}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Pretraži naslov ili autora"
-          placeholderTextColor="#aaa"
-          value={search}
-          onChangeText={setSearch}
-        />
-        <TouchableOpacity 
-          style={styles.sortButton}
-          onPress={() => setSortNewest(!sortNewest)}
-        >
-          <Text style={styles.sortButtonText}>
-            {sortNewest ? 'Najnovije' : 'Najstarije'}
-          </Text>
+        {/* SEARCH ICON */}
+        <TouchableOpacity onPress={()=>setSearchVisible(true)} style={styles.searchIconButton}>
+          <Ionicons name="search" size={28} color="#fff" />
         </TouchableOpacity>
+
+        {/* SORT DROPDOWN */}
+        <TouchableOpacity 
+          style={styles.sortButton} 
+          onPress={()=>setDropdownVisible(true)}
+        >
+          <Text style={styles.sortButtonText}>{sortOption}</Text>
+          <MaterialIcons name="arrow-drop-down" size={24} color="#fff" />
+        </TouchableOpacity>
+
+        {/* ADD BUTTON */}
         <TouchableOpacity 
           style={styles.addButton}
-          onPress={() => navigation.navigate('BookForm')}
+          onPress={()=>navigation.navigate('BookForm')}
         >
-          <Text style={styles.addButtonText}>+ Dodaj</Text>
+          <Ionicons name="add" size={20} color="#fff" style={{ marginRight: 6 }} />
+          <Text style={styles.addButtonText}>Dodaj knjigu</Text>
         </TouchableOpacity>
       </View>
+
+      {/* SEARCH MODAL */}
+      <Modal visible={searchVisible} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={()=>setSearchVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.searchModal}>
+              <TextInput
+                style={styles.searchInputModal}
+                placeholder="Upiši naziv knjige"
+                placeholderTextColor="#aaa"
+                value={search}
+                autoFocus
+                onChangeText={setSearch}
+                onSubmitEditing={() => { fetchBooks(); setSearchVisible(false); }}
+              />
+              <TouchableOpacity onPress={() => { fetchBooks(); setSearchVisible(false); }}>
+                <Ionicons name="search" size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* SORT DROPDOWN MODAL */}
+      <Modal visible={dropdownVisible} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={()=>setDropdownVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.dropdownModal}>
+              {SORT_OPTIONS.map((option,index)=>(
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dropdownItem}
+                  onPress={()=>{ setSortOption(option); setDropdownVisible(false); }}
+                >
+                  <Text style={styles.dropdownItemText}>{option}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       {/* LISTA */}
       {loading ? (
@@ -95,22 +135,20 @@ export default function BookListScreen({ navigation }) {
       ) : (
         <FlatList
           data={books}
-          keyExtractor={(item) => item.bookId}
+          keyExtractor={(item)=>item.bookId}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>Još nema knjiga</Text>
-              <Text style={styles.emptySubtext}>
-                Dodajte prvu knjigu pritiskom na gumb + Dodaj
-              </Text>
+              <Text style={styles.emptySubtext}>Dodajte prvu knjigu pritiskom na gumb + Dodaj</Text>
             </View>
           }
-          renderItem={({ item }) => (
+          renderItem={({item})=>(
             <BookItem
               book={item}
-              onPress={() => navigation.navigate('BookDetail', { bookId: item.bookId })}
-              onDelete={() => handleDelete(item.bookId)}
-              onEdit={() => navigation.navigate('BookForm', { bookId: item.bookId })}
+              onPress={()=>navigation.navigate('BookDetail',{ bookId:item.bookId })}
+              onDelete={()=>handleDelete(item.bookId)}
+              onEdit={()=>navigation.navigate('BookForm',{ bookId:item.bookId })}
             />
           )}
         />
@@ -120,54 +158,34 @@ export default function BookListScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f23' },
+  container:{ flex:1, backgroundColor:'#0f0f23' },
+  header:{ paddingHorizontal:24, paddingTop:60, paddingBottom:20, backgroundColor:'#1a1a2e', alignItems:'center' },
+  headerTitle:{ fontSize:28, fontWeight:'800', color:'#fff' },
 
-  header: { 
-    paddingHorizontal: 24, 
-    paddingTop: 60, 
-    paddingBottom: 20, 
-    backgroundColor: '#1a1a2e', 
-    alignItems: 'center',
-  },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff' },
+  actionRow:{ flexDirection:'row', alignItems:'center', paddingHorizontal:24, paddingVertical:16, gap:12 },
 
-  actionRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 24, 
-    paddingVertical: 16, 
-    gap: 8,
-  },
-  searchInput: { 
-    flex: 1, 
-    backgroundColor: '#1a1a2e', 
-    color: '#fff', 
-    borderRadius: 12, 
-    paddingHorizontal: 16, 
-    height: 44, 
-    fontSize: 16,
-  },
-  sortButton: {
-    backgroundColor: '#0a6734', 
-    paddingHorizontal: 16, 
-    paddingVertical: 10, 
-    borderRadius: 12,
-  },
-  sortButtonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  addButton: { 
-    backgroundColor: '#0a6734', 
-    paddingHorizontal: 16, 
-    paddingVertical: 10, 
-    borderRadius: 12,
-  },
-  addButtonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  searchIconButton:{ backgroundColor:'#2a2a40', padding:12, borderRadius:14 },
 
-  list: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 60, flexGrow: 1 },
+  sortButton:{ flexDirection:'row', alignItems:'center', backgroundColor:'#4c4c6a', paddingHorizontal:16, paddingVertical:12, borderRadius:14, gap:6 },
+  sortButtonText:{ color:'#fff', fontWeight:'700', fontSize:14 },
 
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#a0a0cc', fontSize: 16 },
+  addButton:{ flexDirection:'row', alignItems:'center', backgroundColor:'#0f552d', paddingHorizontal:16, paddingVertical:12, borderRadius:14 },
+  addButtonText:{ color:'#fff', fontWeight:'700', fontSize:14 },
 
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 20, fontWeight: '600', color: '#fff', marginBottom: 8 },
-  emptySubtext: { fontSize: 16, color: '#a0a0cc', textAlign: 'center', lineHeight: 24 },
+  modalOverlay:{ flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', alignItems:'center' },
+  searchModal:{ flexDirection:'row', backgroundColor:'#1a1a2e', borderRadius:14, paddingHorizontal:12, alignItems:'center', width:'85%', height:50 },
+  searchInputModal:{ flex:1, color:'#fff', fontSize:16, marginRight:8 },
+
+  dropdownModal:{ backgroundColor:'#1a1a2e', borderRadius:14, width:'60%', paddingVertical:8 },
+  dropdownItem:{ paddingVertical:12, paddingHorizontal:16 },
+  dropdownItemText:{ color:'#fff', fontSize:16 },
+
+  list:{ paddingHorizontal:24, paddingTop:8, paddingBottom:60, flexGrow:1 },
+
+  loadingContainer:{ flex:1, justifyContent:'center', alignItems:'center' },
+  loadingText:{ color:'#a0a0cc', fontSize:16 },
+
+  emptyContainer:{ flex:1, justifyContent:'center', alignItems:'center', paddingTop:80 },
+  emptyText:{ fontSize:20, fontWeight:'600', color:'#fff', marginBottom:8 },
+  emptySubtext:{ fontSize:16, color:'#a0a0cc', textAlign:'center', lineHeight:24 },
 });
