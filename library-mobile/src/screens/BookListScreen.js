@@ -6,11 +6,15 @@ import BookItem from '../components/BookItem';
 import { getBooks, deleteBook, searchBooks } from '../api/api';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
+/**
+ * Screen displaying the list of books.
+ * Supports searching, sorting, adding, editing, and deleting books.
+ */
 export default function BookListScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [sortOption, setSortOption] = useState('Najnovije');
+  const [sortOption, setSortOption] = useState('Newest');
   const [searchVisible, setSearchVisible] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -20,15 +24,15 @@ export default function BookListScreen({ navigation }) {
       let data = search ? await searchBooks(search) : await getBooks();
 
       switch(sortOption) {
-        case 'Najnovije': data.sort((a,b)=>b.publishedYear - a.publishedYear); break;
-        case 'Najstarije': data.sort((a,b)=>a.publishedYear - b.publishedYear); break;
-        case 'Abecedno A-Z': data.sort((a,b)=>a.title.localeCompare(b.title)); break;
-        case 'Abecedno Z-A': data.sort((a,b)=>b.title.localeCompare(a.title)); break;
+        case 'Newest': data.sort((a,b)=>b.publishedYear - a.publishedYear); break;
+        case 'Oldest': data.sort((a,b)=>a.publishedYear - b.publishedYear); break;
+        case 'A-Z': data.sort((a,b)=>a.title.localeCompare(b.title)); break;
+        case 'Z-A': data.sort((a,b)=>b.title.localeCompare(a.title)); break;
       }
 
       setBooks(data);
     } catch (error) {
-      Alert.alert('Greška', error.message);
+      Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -42,22 +46,22 @@ export default function BookListScreen({ navigation }) {
 
   const handleDelete = (id) => {
     Alert.alert(
-      'Potvrda brisanja',
-      'Jeste li sigurni da želite obrisati knjigu?',
+      'Delete Confirmation',
+      'Are you sure you want to delete this book?',
       [
-        { text: 'Ne', style: 'cancel' },
-        { text: 'Da', style: 'destructive', onPress: async () => { await deleteBook(id); fetchBooks(); } },
+        { text: 'No', style: 'cancel' },
+        { text: 'Yes', style: 'destructive', onPress: async () => { await deleteBook(id); fetchBooks(); } },
       ]
     );
   };
 
-  const SORT_OPTIONS = ['Najnovije','Najstarije','Abecedno A-Z','Abecedno Z-A'];
+  const SORT_OPTIONS = ['Newest','Oldest','A-Z','Z-A'];
 
   return (
     <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Knjige</Text>
+        <Text style={styles.headerTitle}>Books</Text>
       </View>
 
       {/* ACTION ROW */}
@@ -82,7 +86,7 @@ export default function BookListScreen({ navigation }) {
           onPress={()=>navigation.navigate('BookForm')}
         >
           <Ionicons name="add" size={20} color="#fff" style={{ marginRight: 6 }} />
-          <Text style={styles.addButtonText}>Dodaj knjigu</Text>
+          <Text style={styles.addButtonText}>Add Book</Text>
         </TouchableOpacity>
       </View>
 
@@ -93,7 +97,7 @@ export default function BookListScreen({ navigation }) {
             <View style={styles.searchModal}>
               <TextInput
                 style={styles.searchInputModal}
-                placeholder="Upiši naziv knjige"
+                placeholder="Type book title"
                 placeholderTextColor="#aaa"
                 value={search}
                 autoFocus
@@ -127,10 +131,10 @@ export default function BookListScreen({ navigation }) {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* LISTA */}
+      {/* BOOK LIST */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Učitavanje knjiga...</Text>
+          <Text style={styles.loadingText}>Loading books...</Text>
         </View>
       ) : (
         <FlatList
@@ -139,8 +143,8 @@ export default function BookListScreen({ navigation }) {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Još nema knjiga</Text>
-              <Text style={styles.emptySubtext}>Dodajte prvu knjigu pritiskom na gumb + Dodaj</Text>
+              <Text style={styles.emptyText}>No books yet</Text>
+              <Text style={styles.emptySubtext}>Add your first book by pressing the + Add button</Text>
             </View>
           }
           renderItem={({item})=>(

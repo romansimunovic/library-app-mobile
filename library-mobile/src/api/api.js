@@ -3,12 +3,19 @@ import { API_URL } from '@env';
 
 export const BASE_URL = `${API_URL}/books`;
 
+/**
+ * Handles API errors uniformly.
+ * Logs error details and throws an Error with a message suitable for the user.
+ */
 const handleError = (error) => {
   console.log('[API ERROR]', error.response?.data || error.message);
   throw new Error(error.response?.data?.message || error.message);
 };
 
-// Dohvat svih knjiga
+/**
+ * Fetch all books from the backend.
+ * @returns {Promise<Array>} List of books
+ */
 export const getBooks = async () => {
   try {
     console.log('[API] GET', BASE_URL);
@@ -19,7 +26,11 @@ export const getBooks = async () => {
   }
 };
 
-// Dohvat jedne knjige po ID-u
+/**
+ * Fetch a single book by its ID.
+ * @param {string} bookId - Book identifier
+ * @returns {Promise<Object>} Book data
+ */
 export const getBookById = async (bookId) => {
   try {
     console.log('[API] GET', `${BASE_URL}/${bookId}`);
@@ -30,7 +41,11 @@ export const getBookById = async (bookId) => {
   }
 };
 
-// Dodavanje nove knjige
+/**
+ * Create a new book entry.
+ * @param {Object} bookRequest - Book data to create
+ * @returns {Promise<Object>} Created book
+ */
 export const createBook = async (bookRequest) => {
   try {
     console.log('[API] POST', BASE_URL, bookRequest);
@@ -44,7 +59,12 @@ export const createBook = async (bookRequest) => {
   }
 };
 
-// Ažuriranje postojeće knjige
+/**
+ * Update an existing book.
+ * @param {string} bookId - Book identifier
+ * @param {Object} bookRequest - Updated book data
+ * @returns {Promise<Object>} Updated book
+ */
 export const updateBook = async (bookId, bookRequest) => {
   try {
     console.log('[API] PUT', `${BASE_URL}/${bookId}`, bookRequest);
@@ -58,18 +78,25 @@ export const updateBook = async (bookId, bookRequest) => {
   }
 };
 
-// Pretraga knjiga po naslovu ili autoru
+/**
+ * Search books by title or author.
+ * @param {string} query - Search keyword
+ * @returns {Promise<Array>} Matching books
+ */
 export const searchBooks = async (query) => {
   try {
     const response = await axios.get(`${BASE_URL}/search?q=${encodeURIComponent(query)}`);
     return response.data;
   } catch (error) {
-    throw new Error('Greška pri pretraživanju knjiga');
+    throw new Error('Error searching for books');
   }
 };
 
-
-// Brisanje knjige
+/**
+ * Delete a book by ID.
+ * @param {string} bookId - Book identifier
+ * @returns {Promise<Object>} Deletion result
+ */
 export const deleteBook = async (bookId) => {
   try {
     console.log('[API] DELETE', `${BASE_URL}/${bookId}`);

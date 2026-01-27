@@ -2,27 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, TextInput, Switch, Alert, Text, ScrollView, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback 
 } from 'react-native';
-import { createBook, updateBook, getBookById } from '../api/api';
+import { createBook, updateBook, getBookById, deleteBook } from '../api/api';
 
 /**
- * Ekran za dodavanje i uređivanje knjiga
- * Validacija: obavezna polja i osnovna provjera ISBN-a
- * Vizualno isticanje pogrešnih unosa
+ * Screen for creating or editing a book.
+ * Validations: required fields and basic ISBN check.
+ * Highlights invalid inputs visually.
  */
 export default function BookFormScreen({ route, navigation }) {
   const bookId = route.params?.bookId;
 
-  // Polja forme
+  // Form fields
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
   const [publishedYear, setPublishedYear] = useState('');
   const [available, setAvailable] = useState(true);
 
-  // Polja za validaciju
+  // Validation errors
   const [errors, setErrors] = useState({});
 
-  // Dohvat podataka ako je edit
+  // Fetch book if editing
   useEffect(() => {
     if (bookId) {
       getBookById(bookId)
@@ -33,27 +33,27 @@ export default function BookFormScreen({ route, navigation }) {
           setPublishedYear(book.publishedYear?.toString() || '');
           setAvailable(book.available);
         })
-        .catch(err => Alert.alert('Greška', err.message));
+        .catch(err => Alert.alert('Error', err.message));
     }
   }, [bookId]);
 
   /** 
-   * Provjera valjanosti unosa
-   * @returns boolean - true ako su svi unosi ispravni
+   * Validate inputs.
+   * @returns {boolean} true if all fields are valid
    */
   const validate = () => {
     const newErrors = {};
-    if (!title.trim()) newErrors.title = 'Naslov je obavezan';
-    if (!author.trim()) newErrors.author = 'Autor je obavezan';
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!author.trim()) newErrors.author = 'Author is required';
 
-    // osnovna provjera ISBN formata: npr. 978-3-16-148410-0
+    // basic ISBN format check: e.g., 978-3-16-148410-0
     if (isbn.trim() && !/^\d{3}-\d-\d{2}-\d{6}-\d$/.test(isbn.trim())) {
-      newErrors.isbn = 'ISBN nije u ispravnom formatu';
+      newErrors.isbn = 'ISBN format is invalid';
     }
 
-    // opcionalna provjera godine
+    // optional year check
     if (publishedYear.trim() && (isNaN(publishedYear) || parseInt(publishedYear) <= 0)) {
-      newErrors.publishedYear = 'Unesite valjanu godinu';
+      newErrors.publishedYear = 'Enter a valid year';
     }
 
     setErrors(newErrors);
@@ -61,10 +61,10 @@ export default function BookFormScreen({ route, navigation }) {
   };
 
   /**
-   * Spremanje knjige (dodavanje ili update)
+   * Save book (create or update)
    */
   const handleSave = async () => {
-    if (!validate()) return; // ako nisu validni podaci, ne ide dalje
+    if (!validate()) return; // stop if validation fails
 
     const bookRequest = {
       title: title.trim(),
@@ -77,14 +77,14 @@ export default function BookFormScreen({ route, navigation }) {
     try {
       if (bookId) {
         await updateBook(bookId, bookRequest);
-        Alert.alert('Uspjeh', `Knjiga "${title}" je ažurirana`);
+        Alert.alert('Success', `Book "${title}" has been updated`);
       } else {
         await createBook(bookRequest);
-        Alert.alert('Uspjeh', `Knjiga "${title}" je dodana`);
+        Alert.alert('Success', `Book "${title}" has been added`);
       }
       navigation.navigate('BookList', { refresh: true });
     } catch (error) {
-      Alert.alert('Greška', error.message);
+      Alert.alert('Error', error.message);
     }
   };
 
@@ -95,29 +95,29 @@ export default function BookFormScreen({ route, navigation }) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
       >
-        <Text style={styles.header}>{bookId ? 'Uredi knjigu' : 'Dodaj knjigu'}</Text>
+        <Text style={styles.header}>{bookId ? 'Edit Book' : 'Add Book'}</Text>
 
-        {/* Naslov */}
+        {/* Title */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Naslov</Text>
+          <Text style={styles.label}>Title</Text>
           <TextInput 
             value={title} 
             onChangeText={setTitle} 
             style={[styles.input, errors.title && styles.inputError]} 
-            placeholder="Unesite naslov"
+            placeholder="Enter title"
             placeholderTextColor="#999"
           />
           {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
         </View>
 
-        {/* Autor */}
+        {/* Author */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Autor</Text>
+          <Text style={styles.label}>Author</Text>
           <TextInput 
             value={author} 
             onChangeText={setAuthor} 
             style={[styles.input, errors.author && styles.inputError]} 
-            placeholder="Unesite autora"
+            placeholder="Enter author"
             placeholderTextColor="#999"
           />
           {errors.author && <Text style={styles.errorText}>{errors.author}</Text>}
@@ -130,29 +130,29 @@ export default function BookFormScreen({ route, navigation }) {
             value={isbn} 
             onChangeText={setIsbn} 
             style={[styles.input, errors.isbn && styles.inputError]} 
-            placeholder="npr. 978-3-16-148410-0"
+            placeholder="e.g., 978-3-16-148410-0"
             placeholderTextColor="#999"
           />
           {errors.isbn && <Text style={styles.errorText}>{errors.isbn}</Text>}
         </View>
 
-        {/* Godina */}
+        {/* Year */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Godina</Text>
+          <Text style={styles.label}>Year</Text>
           <TextInput
             value={publishedYear}
             onChangeText={setPublishedYear}
             keyboardType="numeric"
             style={[styles.input, errors.publishedYear && styles.inputError]} 
-            placeholder="npr. 2023"
+            placeholder="e.g., 2023"
             placeholderTextColor="#999"
           />
           {errors.publishedYear && <Text style={styles.errorText}>{errors.publishedYear}</Text>}
         </View>
 
-        {/* Dostupnost */}
+        {/* Availability */}
         <View style={styles.switchGroup}>
-          <Text style={styles.switchLabel}>Dostupna</Text>
+          <Text style={styles.switchLabel}>Available</Text>
           <Switch 
             value={available} 
             onValueChange={setAvailable} 
@@ -161,7 +161,7 @@ export default function BookFormScreen({ route, navigation }) {
           />
         </View>
 
-        {/* Spremi */}
+        {/* Save */}
         <TouchableOpacity 
           style={styles.saveButton} 
           onPress={() => {
@@ -169,31 +169,31 @@ export default function BookFormScreen({ route, navigation }) {
             handleSave();
           }}
         >
-          <Text style={styles.saveButtonText}>{bookId ? 'Ažuriraj' : 'Kreiraj'}</Text>
+          <Text style={styles.saveButtonText}>{bookId ? 'Update' : 'Create'}</Text>
         </TouchableOpacity>
 
-        {/* Obriši ako edit */}
+        {/* Delete if editing */}
         {bookId && (
           <TouchableOpacity 
             style={styles.deleteButton} 
             onPress={() => Alert.alert(
-              'Potvrda', 
-              'Jeste li sigurni da želite obrisati ovu knjigu?',
+              'Confirmation', 
+              'Are you sure you want to delete this book?',
               [
-                { text: 'Odustani', style: 'cancel' },
-                { text: 'Obriši', style: 'destructive', onPress: async () => {
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: async () => {
                   try {
                     await deleteBook(bookId);
-                    Alert.alert('Uspjeh', `Knjiga "${title}" je obrisana`);
+                    Alert.alert('Success', `Book "${title}" has been deleted`);
                     navigation.navigate('BookList', { refresh: true });
                   } catch (error) {
-                    Alert.alert('Greška', error.message);
+                    Alert.alert('Error', error.message);
                   }
                 } }
               ]
             )}
           >
-            <Text style={styles.deleteButtonText}>Obriši knjigu</Text>
+            <Text style={styles.deleteButtonText}>Delete Book</Text>
           </TouchableOpacity>
         )}
 
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 24, paddingHorizontal: 24 },
   label: { fontSize: 16, fontWeight: '600', color: '#a0a0cc', marginBottom: 8 },
   input: { backgroundColor: '#1a1a2e', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 20, fontSize: 16, color: '#ffffff', borderWidth: 1, borderColor: '#2a2a3e' },
-  inputError: { borderColor: '#c00' }, // crveni border za pogrešan unos
+  inputError: { borderColor: '#c00' },
   errorText: { color: '#c00', marginTop: 4, fontSize: 12 },
   switchGroup: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 40 },
   switchLabel: { fontSize: 16, fontWeight: '600', color: '#a0a0cc' },

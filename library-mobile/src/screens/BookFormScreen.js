@@ -5,26 +5,35 @@ import {
 } from 'react-native';
 import { createBook, updateBook, getBookById, deleteBook } from '../api/api';
 
+/**
+ * BookFormScreen
+ * 
+ * Screen for creating a new book or editing an existing one.
+ * If `bookId` is provided in route params, the screen fetches the book data for editing.
+ * Handles validation, dirty-checking, saving, and deleting.
+ */
 export default function BookFormScreen({ route, navigation }) {
   const bookId = route.params?.bookId;
 
-  // Stanja forme
+  // Form states
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
   const [publishedYear, setPublishedYear] = useState('');
   const [available, setAvailable] = useState(true);
 
-  // Originalna vrijednost za praćenje promjena
+  // Original data for dirty checking
   const [originalData, setOriginalData] = useState({ title:'', author:'', isbn:'', publishedYear:'', available:true });
 
-  // Error flagovi
+  // Error flags for validation
   const [errors, setErrors] = useState({ title: false, author: false, isbn: false, publishedYear: false });
 
-  // ISBN regex (10 ili 13 znamenki, opcionalno s crticama)
+  // ISBN regex: matches 10 or 13 digits, optional dashes or spaces
   const isbnRegex = /^(?:\d[\- ]?){9,12}[\dX]$/i;
 
-  // Učitavanje knjige ako je edit
+  /**
+   * Fetch book data if editing
+   */
   useEffect(() => {
     if (bookId) {
       getBookById(bookId)
@@ -42,11 +51,16 @@ export default function BookFormScreen({ route, navigation }) {
             available: book.available
           });
         })
-        .catch(err => Alert.alert('Greška', err.message));
+        .catch(err => Alert.alert('Error', err.message));
     }
   }, [bookId]);
 
-  // Provjera valjanosti unosa
+  /**
+   * Validate form fields
+   * - Title and Author are required
+   * - ISBN must be 10 or 13 characters if provided
+   * - Published year must be 4 digits and <= current year
+   */
   const validate = () => {
     let valid = true;
     const newErrors = { title:false, author:false, isbn:false, publishedYear:false };
@@ -60,16 +74,22 @@ export default function BookFormScreen({ route, navigation }) {
     }
 
     setErrors(newErrors);
+
     if (!valid) {
-      Alert.alert('Greška', 'Provjerite unesena polja (ISBN mora imati 10 ili 13 znakova, godina 4 znamenke).');
+      Alert.alert('Validation Error', 'Please check your input fields. ISBN must be 10 or 13 characters. Year must be a 4-digit number.');
     }
+
     return valid;
   };
 
-  // Provjera da li ima promjena
+  // Check if any field has been modified
   const dirty = title !== originalData.title || author !== originalData.author || isbn !== originalData.isbn || publishedYear !== originalData.publishedYear || available !== originalData.available;
 
-  // Save
+  /**
+   * Save handler
+   * - Creates a new book if no bookId
+   * - Updates existing book if bookId exists
+   */
   const handleSave = async () => {
     Keyboard.dismiss();
     if (!validate()) return;
@@ -81,31 +101,33 @@ export default function BookFormScreen({ route, navigation }) {
     try {
       if (bookId) {
         await updateBook(bookId, bookRequest);
-        Alert.alert('Uspjeh', `Knjiga "${title}" ažurirana!`);
+        Alert.alert('Success', `Book "${title}" updated successfully!`);
       } else {
         await createBook(bookRequest);
-        Alert.alert('Uspjeh', `Knjiga "${title}" dodana!`);
+        Alert.alert('Success', `Book "${title}" added successfully!`);
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Greška', error.message);
+      Alert.alert('Error', error.message);
     }
   };
 
-  // Delete
+  /**
+   * Delete handler
+   */
   const handleDelete = () => {
     Alert.alert(
-      'Potvrda brisanja',
-      `Jeste li sigurni da želite obrisati knjigu "${title}"?`,
+      'Confirm Deletion',
+      `Are you sure you want to delete the book "${title}"?`,
       [
-        { text:'Odustani', style:'cancel' },
-        { text:'Obriši', style:'destructive', onPress: async () => {
+        { text:'Cancel', style:'cancel' },
+        { text:'Delete', style:'destructive', onPress: async () => {
           try {
             await deleteBook(bookId);
-            Alert.alert('Uspjeh', `Knjiga "${title}" obrisana!`);
+            Alert.alert('Success', `Book "${title}" deleted successfully!`);
             navigation.goBack();
           } catch(error) {
-            Alert.alert('Greška', error.message);
+            Alert.alert('Error', error.message);
           }
         }}
       ]
@@ -115,40 +137,74 @@ export default function BookFormScreen({ route, navigation }) {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow:1, paddingBottom:40 }}>
-        <Text style={styles.header}>{bookId ? 'Uredi knjigu' : 'Dodaj knjigu'}</Text>
+        <Text style={styles.header}>{bookId ? 'Edit Book' : 'Add New Book'}</Text>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Naslov</Text>
-          <TextInput value={title} onChangeText={setTitle} style={[styles.input, errors.title && styles.inputError]} placeholder="Unesite naslov" placeholderTextColor="#999" />
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            style={[styles.input, errors.title && styles.inputError]}
+            placeholder="Enter book title"
+            placeholderTextColor="#999"
+          />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Autor</Text>
-          <TextInput value={author} onChangeText={setAuthor} style={[styles.input, errors.author && styles.inputError]} placeholder="Unesite autora" placeholderTextColor="#999" />
+          <Text style={styles.label}>Author</Text>
+          <TextInput
+            value={author}
+            onChangeText={setAuthor}
+            style={[styles.input, errors.author && styles.inputError]}
+            placeholder="Enter author's name"
+            placeholderTextColor="#999"
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>ISBN</Text>
-          <TextInput value={isbn} onChangeText={setIsbn} style={[styles.input, errors.isbn && styles.inputError]} placeholder="npr. 978-3-16-148410-0" placeholderTextColor="#999" />
+          <TextInput
+            value={isbn}
+            onChangeText={setIsbn}
+            style={[styles.input, errors.isbn && styles.inputError]}
+            placeholder="e.g. 978-3-16-148410-0"
+            placeholderTextColor="#999"
+          />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Godina</Text>
-          <TextInput value={publishedYear} onChangeText={setPublishedYear} keyboardType="numeric" style={[styles.input, errors.publishedYear && styles.inputError]} placeholder="npr. 2023" placeholderTextColor="#999" />
+          <Text style={styles.label}>Year</Text>
+          <TextInput
+            value={publishedYear}
+            onChangeText={setPublishedYear}
+            keyboardType="numeric"
+            style={[styles.input, errors.publishedYear && styles.inputError]}
+            placeholder="e.g. 2023"
+            placeholderTextColor="#999"
+          />
         </View>
 
         <View style={styles.switchGroup}>
-          <Text style={styles.switchLabel}>Dostupna</Text>
-          <Switch value={available} onValueChange={setAvailable} trackColor={{true:'#0a6734', false:'#721c24'}} thumbColor="#fff" />
+          <Text style={styles.switchLabel}>Available</Text>
+          <Switch
+            value={available}
+            onValueChange={setAvailable}
+            trackColor={{true:'#0a6734', false:'#721c24'}}
+            thumbColor="#fff"
+          />
         </View>
 
-        <TouchableOpacity style={[styles.saveButton, !dirty && {opacity:0.6}]} onPress={handleSave} disabled={!dirty}>
-          <Text style={styles.saveButtonText}>{bookId ? 'Ažuriraj' : 'Kreiraj'}</Text>
+        <TouchableOpacity
+          style={[styles.saveButton, !dirty && {opacity:0.6}]}
+          onPress={handleSave}
+          disabled={!dirty}
+        >
+          <Text style={styles.saveButtonText}>{bookId ? 'Update Book' : 'Create Book'}</Text>
         </TouchableOpacity>
 
         {bookId && (
           <TouchableOpacity style={[styles.deleteButton, {marginTop:8}]} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Obriši knjigu</Text>
+            <Text style={styles.deleteButtonText}>Delete Book</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

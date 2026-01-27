@@ -6,12 +6,15 @@ import BookFormScreen from '../screens/BookFormScreen';
 
 const Stack = createNativeStackNavigator();
 
+/**
+ * Stack navigator for all book-related screens.
+ */
 export default function BooksStack() {
   return (
     <Stack.Navigator initialRouteName="BookList">
-      <Stack.Screen name="BookList" component={BookListScreen} options={{ title: 'Knjige' }} />
-      <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ title: 'Detalji knjige' }} />
-      <Stack.Screen name="BookForm" component={BookFormScreen} options={{ title: 'Dodaj / Uredi knjigu' }} />
+      <Stack.Screen name="BookList" component={BookListScreen} options={{ title: 'Books' }} />
+      <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ title: 'Book Details' }} />
+      <Stack.Screen name="BookForm" component={BookFormScreen} options={{ title: 'Add / Edit Book' }} />
     </Stack.Navigator>
   );
 }

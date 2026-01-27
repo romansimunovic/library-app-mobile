@@ -1,6 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
+/**
+ * Component representing a single book card.
+ * Displays title, author, ISBN, year, availability, and action buttons.
+ */
 export default function BookItem({ book, onPress, onDelete, onEdit }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
@@ -8,18 +12,18 @@ export default function BookItem({ book, onPress, onDelete, onEdit }) {
         <Text style={styles.title} numberOfLines={1}>{book.title}</Text>
         <Text style={styles.author} numberOfLines={1}>{book.author}</Text>
         {book.isbn && <Text style={styles.isbn}>ISBN: {book.isbn}</Text>}
-        <Text style={styles.year}>Godina: {book.publishedYear}</Text>
+        <Text style={styles.year}>Year: {book.publishedYear}</Text>
         <Text style={[styles.available, { color: book.available ? '#4da775' : '#d13232' }]}>
-          {book.available ? 'Dostupna' : 'Nedostupna'}
+          {book.available ? 'Available' : 'Unavailable'}
         </Text>
       </View>
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.editButton} onPress={onEdit}>
-          <Text style={styles.actionText}>Uredi</Text>
+          <Text style={styles.actionText}>Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-          <Text style={styles.actionText}>Obriši</Text>
+          <Text style={styles.actionText}>Delete</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
