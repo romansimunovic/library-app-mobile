@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../theme/theme';
+import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
 
 export default function BookItem({ book, onPress, onDelete, onEdit }) {
   // Only apply the neon glow shadow if the book is available
@@ -79,7 +79,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 10,
   },
-  title: { 
+  title: {
+    ...TYPOGRAPHY.glitch, 
     fontSize: 20, 
     fontWeight: '900', 
     color: COLORS.text, 

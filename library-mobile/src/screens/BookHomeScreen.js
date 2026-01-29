@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { getBooks } from '../api/api';
-import { COLORS, SPACING, SHADOW } from '../theme/theme';
+import { COLORS, SPACING, SHADOW, TYPOGRAPHY } from '../theme/theme';
 
 export default function BookHomeScreen({ navigation }) {
   const [stats, setStats] = useState({ total: 0, available: 0, latestYear: '-' });
@@ -134,74 +134,17 @@ export default function BookHomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.bg },
   container: { padding: SPACING.lg, paddingBottom: 40 },
-  
   header: { marginBottom: 30, marginTop: 20 },
-  kicker: { color: COLORS.brat, fontWeight: '900', letterSpacing: 4, fontSize: 14 },
-  title: { 
-    fontSize: 56, 
-    fontWeight: '900', 
-    color: COLORS.text, 
-    lineHeight: 52, 
-    letterSpacing: -3,
-    marginTop: 5
-  },
-
+  kicker: { ...TYPOGRAPHY.glitch, color: COLORS.brat, letterSpacing: 4, fontSize: 14 },
+  title: { fontSize: 56, fontWeight: '900', color: COLORS.text, lineHeight: 52, letterSpacing: -3 },
   imageContainer: { marginTop: 20, position: 'relative' },
-  cover: { 
-    width: '100%', 
-    height: 200, 
-    borderWidth: 3, 
-    borderColor: COLORS.brat,
-    ...SHADOW.brat 
-  },
-  imageGlitch: {
-    position: 'absolute',
-    top: -5,
-    left: 5,
-    right: -5,
-    bottom: 5,
-    borderWidth: 1,
-    borderColor: COLORS.brat,
-    zIndex: -1,
-  },
-
-  statsRow: { 
-    flexDirection: 'row', 
-    backgroundColor: COLORS.surface, 
-    borderWidth: 2, 
-    borderColor: '#222',
-    marginBottom: 30
-  },
+  cover: { width: '100%', height: 200, borderWidth: 3, borderColor: COLORS.brat, ...SHADOW.brat },
+  statsRow: { flexDirection: 'row', backgroundColor: COLORS.surface, borderWidth: 2, borderColor: '#222', marginTop: 30 },
   statBox: { flex: 1, padding: 15, alignItems: 'center' },
-  statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#222' },
   statNum: { fontSize: 24, fontWeight: '900', color: COLORS.brat },
-  statLabel: { fontSize: 10, fontWeight: '800', color: COLORS.muted, letterSpacing: 1 },
-
-  actions: { gap: 15 },
-  actionCard: { 
-    padding: 20, 
-    flexDirection: 'row', 
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#000'
-  },
-  actionCardPrimary: { 
-    backgroundColor: COLORS.brat, 
-    ...SHADOW.brat 
-  },
-  actionCardSecondary: { 
-    backgroundColor: COLORS.surface, 
-    borderColor: COLORS.brat 
-  },
+  statLabel: { fontSize: 10, fontWeight: '800', color: COLORS.muted },
+  actions: { gap: 15, marginTop: 20 },
+  actionCard: { padding: 20, flexDirection: 'row', alignItems: 'center', borderWidth: 3, borderColor: '#000' },
+  actionCardPrimary: { backgroundColor: COLORS.brat, ...SHADOW.brat },
   actionTitle: { fontSize: 22, fontWeight: '900', letterSpacing: -1 },
-  actionSubtitle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
-
-  footerBranding: { 
-    textAlign: 'center', 
-    marginTop: 40, 
-    color: '#222', 
-    fontWeight: '900', 
-    fontSize: 12, 
-    letterSpacing: 5 
-  }
 });

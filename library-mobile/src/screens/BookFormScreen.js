@@ -1,241 +1,262 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  TextInput,
-  Switch,
-  Alert,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Keyboard,
-  TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Platform
+import { 
+  View, TextInput, Switch, Alert, Text, ScrollView, StyleSheet, 
+  TouchableOpacity, Keyboard, TouchableWithoutFeedback 
 } from 'react-native';
+import { createBook, updateBook, getBookById, deleteBook } from '../api/api';
+import { COLORS, RADIUS, SPACING, SHADOW } from '../theme/theme';
 
-import { createBook, updateBook, getBookById } from '../api/api';
-import { COLORS, SPACING, SHADOW } from '../theme/theme';
-
+/**
+ * BookFormScreen
+ * 
+ * Screen for creating a new book or editing an existing one.
+ * If `bookId` is provided in route params, the screen fetches the book data for editing.
+ * Handles validation, dirty-checking, saving, and deleting.
+ */
 export default function BookFormScreen({ route, navigation }) {
   const bookId = route.params?.bookId;
-  const [activeField, setActiveField] = useState(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    author: '',
-    isbn: '',
-    publishedYear: '',
-    available: true,
-  });
+  // Form states
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [isbn, setIsbn] = useState('');
+  const [publishedYear, setPublishedYear] = useState('');
+  const [available, setAvailable] = useState(true);
 
-  const [originalData, setOriginalData] = useState({});
-  const [errors, setErrors] = useState({});
+  // Original data for dirty checking
+  const [originalData, setOriginalData] = useState({ title:'', author:'', isbn:'', publishedYear:'', available:true });
 
+  // Error flags for validation
+  const [errors, setErrors] = useState({ title: false, author: false, isbn: false, publishedYear: false });
+
+  // ISBN regex: matches 10 or 13 digits, optional dashes or spaces
+  const isbnRegex = /^(?:\d[\- ]?){9,12}[\dX]$/i;
+
+  /**
+   * Fetch book data if editing
+   */
   useEffect(() => {
-    if (!bookId) return;
-    getBookById(bookId)
-      .then(book => {
-        const data = {
-          title: book.title,
-          author: book.author,
-          isbn: book.isbn || '',
-          publishedYear: book.publishedYear?.toString() || '',
-          available: book.available,
-        };
-        setFormData(data);
-        setOriginalData(data);
-      })
-      .catch(err => Alert.alert('SYSTEM ERROR.', err.message));
+    if (bookId) {
+      getBookById(bookId)
+        .then(book => {
+          setTitle(book.title);
+          setAuthor(book.author);
+          setIsbn(book.isbn || '');
+          setPublishedYear(book.publishedYear?.toString() || '');
+          setAvailable(book.available);
+          setOriginalData({
+            title: book.title,
+            author: book.author,
+            isbn: book.isbn || '',
+            publishedYear: book.publishedYear?.toString() || '',
+            available: book.available
+          });
+        })
+        .catch(err => Alert.alert('Error', err.message));
+    }
   }, [bookId]);
 
+  /**
+   * Validate form fields
+   * - Title and Author are required
+   * - ISBN must be 10 or 13 characters if provided
+   * - Published year must be 4 digits and <= current year
+   */
   const validate = () => {
-    const nextErrors = {};
-    
-    // Regex for letters and spaces only
-    const alphaRegex = /^[a-zA-Z\s]*$/;
-    
-    if (!formData.title.trim()) nextErrors.title = "TITLE. IS. REQUIRED.";
-    else if (!alphaRegex.test(formData.title)) nextErrors.title = "LETTERS. ONLY. PLEASE.";
+    let valid = true;
+    const newErrors = { title:false, author:false, isbn:false, publishedYear:false };
+    const currentYear = new Date().getFullYear();
 
-    if (!formData.author.trim()) nextErrors.author = "WHO. WROTE. THIS?";
-    else if (!alphaRegex.test(formData.author)) nextErrors.author = "REAL. NAMES. ONLY.";
-
-    if (formData.publishedYear && !/^\d{4}$/.test(formData.publishedYear)) {
-      nextErrors.publishedYear = "YEAR. MUST. BE. 4. DIGITS.";
+    if (!title.trim()) { newErrors.title = true; valid = false; }
+    if (!author.trim()) { newErrors.author = true; valid = false; }
+    if (isbn.trim() && !isbnRegex.test(isbn.trim())) { newErrors.isbn = true; valid = false; }
+    if (publishedYear.trim() && (!/^\d{4}$/.test(publishedYear.trim()) || parseInt(publishedYear) <=0 || parseInt(publishedYear) > currentYear)) { 
+      newErrors.publishedYear = true; valid = false; 
     }
 
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    setErrors(newErrors);
+
+    if (!valid) {
+      Alert.alert('Validation Error', 'Please check your input fields. ISBN must be 10 or 13 characters. Year must be a 4-digit number.');
+    }
+
+    return valid;
   };
 
-  const isDirty = JSON.stringify(formData) !== JSON.stringify(originalData);
+  // Check if any field has been modified
+  const dirty = title !== originalData.title || author !== originalData.author || isbn !== originalData.isbn || publishedYear !== originalData.publishedYear || available !== originalData.available;
 
+  /**
+   * Save handler
+   * - Creates a new book if no bookId
+   * - Updates existing book if bookId exists
+   */
   const handleSave = async () => {
+    Keyboard.dismiss();
     if (!validate()) return;
+
+    const bookRequest = { title:title.trim(), author:author.trim(), available };
+    if (isbn.trim()) bookRequest.isbn = isbn.trim();
+    if (publishedYear.trim()) bookRequest.publishedYear = parseInt(publishedYear);
+
     try {
-      const payload = { 
-        ...formData, 
-        publishedYear: formData.publishedYear ? Number(formData.publishedYear) : null 
-      };
-      bookId ? await updateBook(bookId, payload) : await createBook(payload);
+      if (bookId) {
+        await updateBook(bookId, bookRequest);
+        Alert.alert('Success', `Book "${title}" updated successfully!`);
+      } else {
+        await createBook(bookRequest);
+        Alert.alert('Success', `Book "${title}" added successfully!`);
+      }
       navigation.goBack();
-    } catch (err) {
-      Alert.alert('FAILED.', err.message);
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
   };
 
-  const renderInput = (label, key, placeholder, keyboardType = 'default') => (
-    <View style={styles.inputGroup}>
-      <View style={styles.labelRow}>
-        <Text style={styles.label}>{label.toUpperCase()}.</Text>
-        {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-      </View>
-      <TextInput
-        value={formData[key]}
-        onChangeText={(txt) => {
-          setFormData({ ...formData, [key]: txt });
-          if (errors[key]) setErrors({ ...errors, [key]: null });
+  /**
+   * Delete handler
+   */
+  const handleDelete = () => {
+    Alert.alert(
+      'Confirm Deletion',
+      `Are you sure you want to delete the book "${title}"?`,
+      [
+        { text:'Cancel', style:'cancel' },
+        { text:'Delete', style:'destructive', onPress: async () => {
+          try {
+            await deleteBook(bookId);
+            Alert.alert('Success', `Book "${title}" deleted successfully!`);
+            navigation.goBack();
+          } catch(error) {
+            Alert.alert('Error', error.message);
+          }
         }}
-        onFocus={() => setActiveField(key)}
-        onBlur={() => setActiveField(null)}
-        keyboardType={keyboardType}
-        placeholder={placeholder}
-        placeholderTextColor="#444"
-        style={[
-          styles.input,
-          errors[key] && styles.inputError,
-          activeField === key && styles.inputActive
-        ]}
-      />
-    </View>
-  );
+      ]
+    );
+  };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-      style={{ flex: 1 }}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-          
-          <Text style={styles.header}>
-            {bookId ? 'UPDATE. THE.\nARCHIVE.' : 'NEW. ENTRY.\nREQUIRED.'}
-          </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow:1, paddingBottom:40 }}>
+        <Text style={styles.header}>{bookId ? 'Edit Book' : 'Add New Book'}</Text>
 
-          {renderInput('Title', 'title', 'SOMETHING. ICONIC.')}
-          {renderInput('Author', 'author', 'A. REAL. GENIUS.')}
-          {renderInput('Isbn No.', 'isbn', '13. DIGITS. OF. NUMBERS.')}
-          {renderInput('Year', 'publishedYear', 'YYYY.', 'numeric')}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            style={[styles.input, errors.title && styles.inputError]}
+            placeholder="Enter book title"
+            placeholderTextColor="#999"
+          />
+        </View>
 
-          <View style={styles.switchRow}>
-            <View>
-              <Text style={styles.label}>AVAILABILITY.</Text>
-              <Text style={[styles.statusIndicator, { color: formData.available ? COLORS.brat : '#ff4444' }]}>
-                {formData.available ? 'AVAILABLE. PERIOD.' : 'GONE. AT. THE. MOMENT.'}
-              </Text>
-            </View>
-            <Switch
-              value={formData.available}
-              onValueChange={(val) => setFormData({ ...formData, available: val })}
-              trackColor={{ true: COLORS.brat, false: '#222' }}
-              thumbColor={formData.available ? '#fff' : '#666'}
-            />
-          </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Author</Text>
+          <TextInput
+            value={author}
+            onChangeText={setAuthor}
+            style={[styles.input, errors.author && styles.inputError]}
+            placeholder="Enter author's name"
+            placeholderTextColor="#999"
+          />
+        </View>
 
-          <TouchableOpacity
-            disabled={!isDirty}
-            onPress={handleSave}
-            style={[styles.primaryButton, !isDirty && styles.disabledButton]}
-          >
-            <Text style={styles.primaryText}>
-              {bookId ? 'SAVE. CHANGES.' : 'CONFIRM. ADDITION.'}
-            </Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>ISBN</Text>
+          <TextInput
+            value={isbn}
+            onChangeText={setIsbn}
+            style={[styles.input, errors.isbn && styles.inputError]}
+            placeholder="e.g. 978-3-16-148410-0"
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Year</Text>
+          <TextInput
+            value={publishedYear}
+            onChangeText={setPublishedYear}
+            keyboardType="numeric"
+            style={[styles.input, errors.publishedYear && styles.inputError]}
+            placeholder="e.g. 2023"
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        <View style={styles.switchGroup}>
+          <Text style={styles.switchLabel}>Available</Text>
+          <Switch
+            value={available}
+            onValueChange={setAvailable}
+            trackColor={{true:'#0a6734', false:'#721c24'}}
+            thumbColor="#fff"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.saveButton, !dirty && {opacity:0.6}]}
+          onPress={handleSave}
+          disabled={!dirty}
+        >
+          <Text style={styles.saveButtonText}>{bookId ? 'Update Book' : 'Create Book'}</Text>
+        </TouchableOpacity>
+
+        {bookId && (
+          <TouchableOpacity style={[styles.deleteButton, {marginTop:8}]} onPress={handleDelete}>
+            <Text style={styles.deleteButtonText}>Delete Book</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>[ ABORT. ]</Text>
-          </TouchableOpacity>
-
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        )}
+      </ScrollView>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  scrollContent: { padding: SPACING.lg, paddingBottom: 100 },
-  
-  header: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: COLORS.text,
-    letterSpacing: -3,
-    marginBottom: 40,
-    lineHeight: 44,
-    marginTop: 20,
-  },
+container: {
+  flex: 1,
+  backgroundColor: COLORS.bg,
+},
+  header:{ fontSize:28, fontWeight:'800', color:'#fff', textAlign:'center', marginVertical:32 },
+  inputGroup:{ marginBottom:24, paddingHorizontal:24 },
+  label:{ fontSize:16, fontWeight:'600', color:'#a0a0cc', marginBottom:8 },
+input: {
+  backgroundColor: COLORS.surface,
+  borderRadius: RADIUS.xl,
+  paddingVertical: 16,
+  paddingHorizontal: 20,
 
-  inputGroup: { marginBottom: 25 },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 },
-  label: {
-    color: COLORS.brat,
-    fontWeight: '900',
-    fontSize: 12,
-    letterSpacing: 2,
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 10,
-    fontWeight: '900',
-  },
+  color: COLORS.text,
+  fontSize: 16,
+  fontWeight: '700',
 
-  input: {
-    backgroundColor: '#0a0a0a',
-    padding: 18,
-    borderWidth: 2,
-    borderColor: '#222',
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '800',
-    borderRadius: 0, // Perfectly sharp corners
-  },
+  borderWidth: 3,
+  borderColor: COLORS.border,
+},
+  inputError:{ borderColor:'#c00' },
+  switchGroup:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:24, marginBottom:40 },
+  switchLabel:{ fontSize:16, fontWeight:'600', color:'#a0a0cc' },
+saveButton: {
+  backgroundColor: COLORS.brat,
+  marginHorizontal: SPACING.lg,
+  borderRadius: RADIUS.xl,
+  paddingVertical: 18,
+  alignItems: 'center',
 
-  inputActive: {
-    borderColor: COLORS.brat,
-    backgroundColor: '#111',
-  },
+  borderWidth: 3,
+  borderColor: COLORS.border,
 
-  inputError: {
-    borderColor: '#ff4444',
-  },
+  ...SHADOW.brat,
+},
 
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 25,
-    borderTopWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: '#111',
-    marginBottom: 40,
-  },
-
-  statusIndicator: { fontSize: 12, fontWeight: '900', marginTop: 4 },
-
-  primaryButton: {
-    backgroundColor: COLORS.brat,
-    paddingVertical: 20,
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#000',
-    ...SHADOW.brat,
-  },
-
-  disabledButton: { opacity: 0.2 },
-  primaryText: { color: '#000', fontWeight: '900', fontSize: 20, letterSpacing: -1 },
-
-  cancelButton: { marginTop: 20, alignItems: 'center' },
-  cancelText: { color: COLORS.muted, fontWeight: '800', fontSize: 12, letterSpacing: 2 },
+saveButtonText: {
+  color: '#000',
+  fontSize: 18,
+  fontWeight: '900',
+  letterSpacing: -0.5,
+},
+  saveButtonText:{ color:'#fff', fontSize:18, fontWeight:'700' },
+  deleteButton:{ backgroundColor:'#721c24', marginHorizontal:24, borderRadius:16, paddingVertical:18, alignItems:'center' },
+  deleteButtonText:{ color:'#fff', fontSize:18, fontWeight:'700' },
 });
