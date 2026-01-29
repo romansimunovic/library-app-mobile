@@ -1,81 +1,131 @@
-💚 BRAT. LIBRARY. APP.
-Mentor: Assistant Marko Buljan
+# 🟩 BRAT. LIBRARY. APP.
 
-Course: Programming 3 – Faculty of Humanities and Social Sciences, Osijek
+> **"READING. IS. SO. BRAT."**
 
-Project Lead: [Your Name]
+A high-performance library management system built with **React Native** and **Spring Boot**, wrapped in the unapologetic, high-contrast aesthetic of Charli XCX’s *Brat* era. This isn't just a CRUD app; it's a statement.
 
-🟩 THE. VIBE.
-Forget boring library software. This application is inspired by Gen Z pop culture, "BRAT summer," and the high-contrast, minimalist aesthetic of Charli XCX's 6th studio album. It’s industrial. It’s lime green. It’s unapologetic. It’s about managing data with main character energy.
+---
 
-🛠️ FEATURES. PERIOD.
-THE ARCHIVE: A high-intensity FlatList of books with real-time status updates.
+## 🟩 THE. VIBE.
 
-NEW ENTRIES: A "File Update" style form with strict validation (letters only, no filler).
+Forget boring, corporate library software. This application embraces **Gen Z pop culture** and "Brat Summer."
 
-VIBE SEARCH: A blackout-style modal to find books instantly.
+* **Industrial.**
+* **Lime Green.**
+* **Unapologetic.**
+It’s about managing data with main character energy and high-fashion "anti-design."
 
-GLITCH UI: Anti-design elements, including tilted status blocks and neon shadows.
+---
 
-REST API INTEGRATION: Fully connected to a Spring Boot backend.
+## 🛠️ FEATURES. PERIOD.
 
-🧪 THE. TECH. STACK.
-React Native + Expo Go (The Engine)
+* **THE ARCHIVE** – A high-intensity `FlatList` with real-time book status.
+* **NEW ENTRIES** – A "File Update" style form with strict validation (letters only, no filler).
+* **VIBE SEARCH** – A blackout-style modal to find books instantly within the archive.
+* **GLITCH UI** – Anti-design elements: tilted status blocks, sharp corners, and neon shadows.
+* **REST INTEGRATION** – Fully connected to a **Spring Boot** REST API with **PostgreSQL**.
 
-React Navigation (The Flow)
+---
 
-Axios (The Connection)
+## 🧪 THE. TECH. STACK.
 
-Spring Boot + PostgreSQL (The Backbone)
+* **Frontend:** React Native + Expo Go
+* **Backend:** Spring Boot (Java)
+* **Database:** PostgreSQL
+* **Communication:** Axios + REST
+* **Design:** Custom "Brat" Tokens (theme.js)
+* **AI Collaborators:** Gemini 1.5 Flash / GPT-4o
 
-Gemini 1.5 Flash / GPT-4o (The AI Collaborators)
+---
 
-📁 PROJECT. STRUCTURE.
-Plaintext
+## 📁 PROJECT. STRUCTURE.
+
+```bash
 src/
  ├── api/          # Axios logic (The data pipeline)
- ├── components/   # BookItem (The modular UI)
+ ├── components/   # BookItem (The modular UI card)
  ├── screens/      # Home, List, Detail, Form (The Viewports)
- ├── theme/        # theme.js (The BRAT color tokens: #89CC04)
+ ├── theme/        # theme.js (Design tokens & neon shadows)
  └── navigation/   # Stack & Tab logic
-App.js             # Entry Point
-.env               # API_URL (The Gateway)
-🚀 BOOTING. UP.
-Clone the archive: git clone <repo-url>
+App.js             # Root Navigation Container
+.env               # API_URL (The Gateway to the backend)
 
-Install dependencies: npm install
+```
 
-Configure the link: Update .env with your machine's IP:
+---
 
-Code snippet
+## 💅 DESIGN. TOKENS. (theme.js)
+
+The app's identity is hardcoded into a modular theme. Instead of standard "Material Design," we use **sharp edges** and **aggressive colors**.
+
+| Token | Value | Vibe |
+| --- | --- | --- |
+| **BRAT_GREEN** | `#89CC04` | High intensity neon |
+| **PITCH_BLACK** | `#0f0f0f` | Background depth |
+| **TEXT_PRIMARY** | `#ffffff` | Pure white |
+| **SHADOWS** | `6px offset` | Hard, industrial depth |
+
+> **Note:** We ditched `borderRadius` for the "Brat" look. The app uses `elevation: 8` on Android to simulate the neon green glow.
+
+---
+
+## 🚀 BOOTING. UP.
+
+1. **Clone the repository:**
+```bash
+git clone <your-repo-link>
+
+```
+
+
+2. **Install dependencies:**
+```bash
+npm install
+
+```
+
+
+3. **Configure the Environment:** Create a `.env` file in the root directory:
+```env
 API_URL=http://192.168.x.x:8080/api
-Launch: npx expo start -c
 
-Scan: Open Expo Go on your phone (Same Wi-Fi is mandatory).
+```
 
-🚩 DEVELOPMENT. LOG.
-The "Double Fetch" Glitch: Fixed duplicate API calls by combining useEffect dependencies.
 
-The Shadow Bug: Android doesn't support standard shadows well; added elevation logic to ensure the "Brat Glow" worked on all devices.
+4. **Launch Expo:**
+```bash
+npx expo start -c
 
-ReferenceErrors: Cleaned up duplicate imports for StyleSheet and @expo/vector-icons.
+```
 
-The Aesthetic Shift: Moved from standard "Material Design" to "Brat Anti-Design" (Sharp corners, heavy typography, and tilted blocks).
 
-💅 DESIGN. PHILOSOPHY. (GEN Z / BRAT)
-The UI follows the Brat aesthetic:
+5. **Connect:** Ensure your phone is on the **same Wi-Fi network** as your backend server and scan the QR code via **Expo Go**.
 
-Color: Primary use of #89CC04 (Brat Green) against #000000 (Pitch Black).
+---
 
-Typography: All-caps, heavy font weights (900), and negative letter-spacing for that "poster" look.
+## 🚩 DEVELOPMENT. LOG.
 
-Tone: The app doesn't say "Error"; it says "FAILED. VIBE. CHECK." It doesn't say "Loading"; it says "FETCHING. THE. ARCHIVE."
+* **The "Double Fetch" Glitch:** Fixed duplicate API calls by combining `useEffect` navigation listeners.
+* **The Shadow Bug:** Android doesn't support blurred shadows well; implemented a **Hard Shadow** approach (`shadowOpacity: 1, shadowRadius: 0`) to match the industrial look.
+* **Bratty Validation:** Implemented regex that blocks numbers in Title/Author fields—keeping the data "clean" and consistent.
+* **Anti-Design:** Switched from `borderRadius: RADIUS.xl` to sharp corners to better reflect the album cover's aesthetic.
 
-🤖 AI. ROLE.
-This project utilized AI for:
+---
 
-Refactoring: Turning a monolithic App.js into a clean, modular structure.
+## 🤖 AI. ROLE.
 
-Theme Engineering: Translating the "Brat" aesthetic into a theme.js file.
+This project utilized AI assistance for:
 
-Validation: Creating regex-based "Bratty" error handling.
+* **Refactoring:** Converting a monolithic `App.js` into a clean, modular component-based architecture.
+* **Theme Engineering:** Translating the "Brat" aesthetic into a scalable `theme.js` file.
+* **Validation:** Creating "Bratty" error handling (e.g., `"WHO. WROTE. THIS?"` instead of `"Field required"`).
+
+---
+
+**Mentor:** Assistant Marko Buljan
+
+**Course:** Programming 3 – Faculty of Humanities and Social Sciences, Osijek
+
+**Project Lead:** Roman Šimunović
+
+**V1.0.0 — SO. BRAT.**
