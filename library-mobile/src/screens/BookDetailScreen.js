@@ -12,6 +12,17 @@ import { getBookById, deleteBook } from '../api/api';
 import { COLORS, SPACING, SHADOW } from '../theme/theme';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
+const formatYear = year => {
+  if (!year) return 'UNKNOWN';
+  if (year < 0) return `${Math.abs(year)} BC`;
+  return year.toString();
+};
+
+const formatIsbn = isbn => {
+  if (!isbn) return 'NOT REGISTERED';
+  return isbn;
+};
+
 export default function BookDetailScreen({ route, navigation }) {
   const { bookId } = route.params;
   const [book, setBook] = useState(null);
@@ -62,47 +73,86 @@ export default function BookDetailScreen({ route, navigation }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* GIANT HERO SECTION */}
       <View style={styles.hero}>
-        <Text style={styles.kicker}>BOOK. ENTRY.</Text>
-        <Text style={styles.title}>{book.title.toUpperCase()}</Text>
-        <Text style={styles.author}>BY {book.author.toUpperCase()}</Text>
-      </View>
+  <Text style={styles.kicker}>BOOK ENTRY</Text>
+
+  <Text
+    style={styles.title}
+    numberOfLines={3}
+    adjustsFontSizeToFit
+  >
+    {book.title}
+  </Text>
+
+  <Text style={styles.author}>
+    by {book.author}
+  </Text>
+</View>
+
 
       {/* STATUS BLOCK */}
-      <View style={[
-        styles.statusBlock, 
-        { backgroundColor: book.available ? COLORS.brat : COLORS.dangerDark }
-      ]}>
-        <Text style={[styles.statusText, { color: book.available ? '#000' : '#fff' }]}>
-          {book.available ? 'AVAILABLE. PERIOD.' : 'CURRENTLY. GONE.'}
-        </Text>
-      </View>
+      <View
+  style={[
+    styles.statusBlock,
+    {
+      backgroundColor: book.available
+        ? COLORS.brat
+        : COLORS.dangerDark,
+    },
+  ]}
+>
+  <Text
+    style={[
+      styles.statusText,
+      { color: book.available ? '#000' : '#fff' },
+    ]}
+  >
+    {book.available
+      ? 'AVAILABLE FOR BORROWING'
+      : 'CURRENTLY CHECKED OUT'}
+  </Text>
+</View>
+
 
       {/* SPECS GRID */}
       <View style={styles.grid}>
-        <View style={styles.gridItem}>
-          <Text style={styles.gridLabel}>ISBN. NO.</Text>
-          <Text style={styles.gridValue}>{book.isbn || 'NONE'}</Text>
-        </View>
-        <View style={styles.gridItem}>
-          <Text style={styles.gridLabel}>YEAR.</Text>
-          <Text style={styles.gridValue}>{book.publishedYear || 'N/A'}</Text>
-        </View>
-      </View>
+  <View style={styles.gridItem}>
+    <Text style={styles.gridLabel}>ISBN</Text>
+    <Text style={styles.gridValue}>
+      {formatIsbn(book.isbn)}
+    </Text>
+  </View>
+
+  <View style={styles.gridItem}>
+    <Text style={styles.gridLabel}>PUBLISHED</Text>
+    <Text style={styles.gridValue}>
+      {formatYear(book.publishedYear)}
+    </Text>
+  </View>
+</View>
+
 
       {/* ACTION ROW */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => navigation.navigate('BookForm', { bookId })}
-        >
-          <MaterialIcons name="edit" size={24} color="#000" />
-          <Text style={styles.editText}>EDIT. ENTRY.</Text>
-        </TouchableOpacity>
+  <TouchableOpacity
+    style={styles.editButton}
+    onPress={() =>
+      navigation.navigate('BookForm', { bookId })
+    }
+  >
+    <MaterialIcons name="edit" size={24} color="#000" />
+    <Text style={styles.editText}>EDIT ENTRY</Text>
+  </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Text style={styles.deleteText}>DELETE. PERMANENTLY.</Text>
-        </TouchableOpacity>
-      </View>
+  <TouchableOpacity
+    style={styles.deleteButton}
+    onPress={handleDelete}
+  >
+    <Text style={styles.deleteText}>
+      DELETE FROM ARCHIVE
+    </Text>
+  </TouchableOpacity>
+</View>
+
     </ScrollView>
   );
 }
