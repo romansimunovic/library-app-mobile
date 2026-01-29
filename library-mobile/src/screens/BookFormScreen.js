@@ -1,262 +1,361 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, TextInput, Switch, Alert, Text, ScrollView, StyleSheet, 
-  TouchableOpacity, Keyboard, TouchableWithoutFeedback 
+import {
+  View,
+  TextInput,
+  Switch,
+  Alert,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { createBook, updateBook, getBookById, deleteBook } from '../api/api';
 import { COLORS, RADIUS, SPACING, SHADOW } from '../theme/theme';
 
-/**
- * BookFormScreen
- * 
- * Screen for creating a new book or editing an existing one.
- * If `bookId` is provided in route params, the screen fetches the book data for editing.
- * Handles validation, dirty-checking, saving, and deleting.
- */
+const CURRENT_YEAR = new Date().getFullYear();
+
 export default function BookFormScreen({ route, navigation }) {
   const bookId = route.params?.bookId;
 
-  // Form states
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
   const [publishedYear, setPublishedYear] = useState('');
   const [available, setAvailable] = useState(true);
 
-  // Original data for dirty checking
-  const [originalData, setOriginalData] = useState({ title:'', author:'', isbn:'', publishedYear:'', available:true });
+  const [errors, setErrors] = useState({});
 
-  // Error flags for validation
-  const [errors, setErrors] = useState({ title: false, author: false, isbn: false, publishedYear: false });
+  const [originalData, setOriginalData] = useState({
+    title: '',
+    author: '',
+    isbn: '',
+    publishedYear: '',
+    available: true,
+  });
 
-  // ISBN regex: matches 10 or 13 digits, optional dashes or spaces
-  const isbnRegex = /^(?:\d[\- ]?){9,12}[\dX]$/i;
-
-  /**
-   * Fetch book data if editing
-   */
   useEffect(() => {
-    if (bookId) {
-      getBookById(bookId)
-        .then(book => {
-          setTitle(book.title);
-          setAuthor(book.author);
-          setIsbn(book.isbn || '');
-          setPublishedYear(book.publishedYear?.toString() || '');
-          setAvailable(book.available);
-          setOriginalData({
-            title: book.title,
-            author: book.author,
-            isbn: book.isbn || '',
-            publishedYear: book.publishedYear?.toString() || '',
-            available: book.available
-          });
-        })
-        .catch(err => Alert.alert('Error', err.message));
-    }
+    if (!bookId) return;
+
+    getBookById(bookId)
+      .then(book => {
+        setTitle(book.title);
+        setAuthor(book.author);
+        setIsbn(book.isbn?.toString() || '');
+        setPublishedYear(book.publishedYear?.toString() || '');
+        setAvailable(book.available);
+
+        setOriginalData({
+          title: book.title,
+          author: book.author,
+          isbn: book.isbn?.toString() || '',
+          publishedYear: book.publishedYear?.toString() || '',
+          available: book.available,
+        });
+      })
+      .catch(err => Alert.alert('Oops', err.message));
   }, [bookId]);
 
-  /**
-   * Validate form fields
-   * - Title and Author are required
-   * - ISBN must be 10 or 13 characters if provided
-   * - Published year must be 4 digits and <= current year
-   */
-  const validate = () => {
-    let valid = true;
-    const newErrors = { title:false, author:false, isbn:false, publishedYear:false };
-    const currentYear = new Date().getFullYear();
+  /* -------------------------
+     INPUT FILTERING (NO REGEX)
+     ------------------------- */
 
-    if (!title.trim()) { newErrors.title = true; valid = false; }
-    if (!author.trim()) { newErrors.author = true; valid = false; }
-    if (isbn.trim() && !isbnRegex.test(isbn.trim())) { newErrors.isbn = true; valid = false; }
-    if (publishedYear.trim() && (!/^\d{4}$/.test(publishedYear.trim()) || parseInt(publishedYear) <=0 || parseInt(publishedYear) > currentYear)) { 
-      newErrors.publishedYear = true; valid = false; 
+  const handleTitleChange = (text = '') => {
+  const cleaned = text
+    .split('')
+    .filter(char =>
+      char.match(/\p{L}|\p{N}|\s/u)
+    )
+    .join('');
+
+  setTitle(cleaned);
+};
+
+
+ const handleAuthorChange = (text = '') => {
+  const cleaned = text
+    .split('')
+    .filter(char =>
+      char.match(/\p{L}|\s/u)
+    )
+    .join('');
+
+  setAuthor(cleaned);
+};
+
+
+  const handleIsbnChange = (text = '') => {
+  const cleaned = text
+    .split('')
+    .filter(char => char >= '0' && char <= '9')
+    .join('');
+
+  setIsbn(cleaned);
+};
+
+
+  const handleYearChange = (text = '') => {
+  let cleaned = text
+    .split('')
+    .filter(char =>
+      (char >= '0' && char <= '9') || char === '-'
+    )
+    .join('');
+
+  // Only allow ONE leading minus
+  if (cleaned.includes('-')) {
+    cleaned =
+      (cleaned.startsWith('-') ? '-' : '') +
+      cleaned.replace(/-/g, '');
+  }
+
+  setPublishedYear(cleaned);
+};
+
+
+  /* -------------------------
+     VALIDATION
+     ------------------------- */
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!title.trim()) {
+      newErrors.title = 'Title can’t be empty. Even ancient scrolls had names.';
+    }
+
+    if (!author.trim()) {
+      newErrors.author = 'Author missing. Books don’t write themselves (yet).';
+    }
+
+    if (isbn) {
+      if (!(isbn.length === 10 || isbn.length === 13)) {
+        newErrors.isbn = 'ISBN must be 10 or 13 digits. Not 11. Not vibes.';
+      }
+    }
+
+    if (publishedYear) {
+      const year = Number(publishedYear);
+
+      if (Number.isNaN(year)) {
+        newErrors.publishedYear = 'That doesn’t look like a year from this universe.';
+      } else if (year === 0) {
+        newErrors.publishedYear = 'There is no year 0. History skipped it.';
+      } else if (year > CURRENT_YEAR) {
+        newErrors.publishedYear = `Nice try, time traveler. Max year is ${CURRENT_YEAR}.`;
+      }
     }
 
     setErrors(newErrors);
 
-    if (!valid) {
-      Alert.alert('Validation Error', 'Please check your input fields. ISBN must be 10 or 13 characters. Year must be a 4-digit number.');
+    if (Object.keys(newErrors).length > 0) {
+      Alert.alert(
+        'Hold up ✋',
+        'Some fields are acting suspicious. Fix them and we’re good.'
+      );
+      return false;
     }
 
-    return valid;
+    return true;
   };
 
-  // Check if any field has been modified
-  const dirty = title !== originalData.title || author !== originalData.author || isbn !== originalData.isbn || publishedYear !== originalData.publishedYear || available !== originalData.available;
+  const dirty =
+    title !== originalData.title ||
+    author !== originalData.author ||
+    isbn !== originalData.isbn ||
+    publishedYear !== originalData.publishedYear ||
+    available !== originalData.available;
 
-  /**
-   * Save handler
-   * - Creates a new book if no bookId
-   * - Updates existing book if bookId exists
-   */
   const handleSave = async () => {
     Keyboard.dismiss();
     if (!validate()) return;
 
-    const bookRequest = { title:title.trim(), author:author.trim(), available };
-    if (isbn.trim()) bookRequest.isbn = isbn.trim();
-    if (publishedYear.trim()) bookRequest.publishedYear = parseInt(publishedYear);
+    const payload = {
+      title: title.trim(),
+      author: author.trim(),
+      available,
+    };
+
+    if (isbn) payload.isbn = isbn;
+    if (publishedYear) payload.publishedYear = Number(publishedYear);
 
     try {
       if (bookId) {
-        await updateBook(bookId, bookRequest);
-        Alert.alert('Success', `Book "${title}" updated successfully!`);
+        await updateBook(bookId, payload);
+        Alert.alert('Saved ', 'Book updated. Librarians everywhere approve.');
       } else {
-        await createBook(bookRequest);
-        Alert.alert('Success', `Book "${title}" added successfully!`);
+        await createBook(payload);
+        Alert.alert('Added ', 'New book added to the universe.');
       }
       navigation.goBack();
-    } catch (error) {
-      Alert.alert('Error', error.message);
+    } catch (err) {
+      Alert.alert('Error', err.message);
     }
   };
 
-  /**
-   * Delete handler
-   */
   const handleDelete = () => {
     Alert.alert(
-      'Confirm Deletion',
-      `Are you sure you want to delete the book "${title}"?`,
+      'Delete book?',
+      'This action is forever. Like deleting history.',
       [
-        { text:'Cancel', style:'cancel' },
-        { text:'Delete', style:'destructive', onPress: async () => {
-          try {
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
             await deleteBook(bookId);
-            Alert.alert('Success', `Book "${title}" deleted successfully!`);
             navigation.goBack();
-          } catch(error) {
-            Alert.alert('Error', error.message);
-          }
-        }}
+          },
+        },
       ]
     );
   };
+return (
+  <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.header}>
+        {bookId ? 'Edit Book' : 'Add New Book'}
+      </Text>
 
-  return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow:1, paddingBottom:40 }}>
-        <Text style={styles.header}>{bookId ? 'Edit Book' : 'Add New Book'}</Text>
+      <Field
+        label="Title"
+        value={title}
+        onChangeText={handleTitleChange}
+        error={errors.title}
+        placeholder="1984, Dune, React for Humans"
+      />
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Title</Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            style={[styles.input, errors.title && styles.inputError]}
-            placeholder="Enter book title"
-            placeholderTextColor="#999"
-          />
-        </View>
+      <Field
+        label="Author"
+        value={author}
+        onChangeText={handleAuthorChange}
+        error={errors.author}
+        placeholder="George Orwell"
+      />
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Author</Text>
-          <TextInput
-            value={author}
-            onChangeText={setAuthor}
-            style={[styles.input, errors.author && styles.inputError]}
-            placeholder="Enter author's name"
-            placeholderTextColor="#999"
-          />
-        </View>
+      <Field
+        label="ISBN"
+        value={isbn}
+        onChangeText={handleIsbnChange}
+        error={errors.isbn}
+        placeholder="Numbers only, no drama"
+        keyboardType="numeric"
+      />
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>ISBN</Text>
-          <TextInput
-            value={isbn}
-            onChangeText={setIsbn}
-            style={[styles.input, errors.isbn && styles.inputError]}
-            placeholder="e.g. 978-3-16-148410-0"
-            placeholderTextColor="#999"
-          />
-        </View>
+      <Field
+        label="Year"
+        value={publishedYear}
+        onChangeText={handleYearChange}
+        error={errors.publishedYear}
+        placeholder="–400 or 2023"
+        keyboardType="numeric"
+      />
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Year</Text>
-          <TextInput
-            value={publishedYear}
-            onChangeText={setPublishedYear}
-            keyboardType="numeric"
-            style={[styles.input, errors.publishedYear && styles.inputError]}
-            placeholder="e.g. 2023"
-            placeholderTextColor="#999"
-          />
-        </View>
+      <View style={styles.switchGroup}>
+        <Text style={styles.switchLabel}>Available</Text>
+        <Switch value={available} onValueChange={setAvailable} />
+      </View>
 
-        <View style={styles.switchGroup}>
-          <Text style={styles.switchLabel}>Available</Text>
-          <Switch
-            value={available}
-            onValueChange={setAvailable}
-            trackColor={{true:'#0a6734', false:'#721c24'}}
-            thumbColor="#fff"
-          />
-        </View>
+      <TouchableOpacity
+        style={[styles.saveButton, !dirty && { opacity: 0.5 }]}
+        onPress={handleSave}
+        disabled={!dirty}
+      >
+        <Text style={styles.saveButtonText}>
+          {bookId ? 'Update Book' : 'Create Book'}
+        </Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.saveButton, !dirty && {opacity:0.6}]}
-          onPress={handleSave}
-          disabled={!dirty}
-        >
-          <Text style={styles.saveButtonText}>{bookId ? 'Update Book' : 'Create Book'}</Text>
+      {bookId && (
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Text style={styles.deleteButtonText}>Delete Book</Text>
         </TouchableOpacity>
+      )}
+    </ScrollView>
+  </TouchableWithoutFeedback>
+);
+}
 
-        {bookId && (
-          <TouchableOpacity style={[styles.deleteButton, {marginTop:8}]} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Delete Book</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </TouchableWithoutFeedback>
+/* -------------------------
+   REUSABLE FIELD
+   ------------------------- */
+
+function Field({ label, error, onChangeText, ...props }) {
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+
+      <TextInput
+        {...props}
+        onChangeText={onChangeText}
+        style={[styles.input, error && styles.inputError]}
+        placeholderTextColor="#999"
+      />
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
   );
 }
 
+
+/* -------------------------
+   STYLES
+   ------------------------- */
+
 const styles = StyleSheet.create({
-container: {
-  flex: 1,
-  backgroundColor: COLORS.bg,
-},
-  header:{ fontSize:28, fontWeight:'800', color:'#fff', textAlign:'center', marginVertical:32 },
-  inputGroup:{ marginBottom:24, paddingHorizontal:24 },
-  label:{ fontSize:16, fontWeight:'600', color:'#a0a0cc', marginBottom:8 },
-input: {
-  backgroundColor: COLORS.surface,
-  borderRadius: RADIUS.xl,
-  paddingVertical: 16,
-  paddingHorizontal: 20,
-
-  color: COLORS.text,
-  fontSize: 16,
-  fontWeight: '700',
-
-  borderWidth: 3,
-  borderColor: COLORS.border,
-},
-  inputError:{ borderColor:'#c00' },
-  switchGroup:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:24, marginBottom:40 },
-  switchLabel:{ fontSize:16, fontWeight:'600', color:'#a0a0cc' },
-saveButton: {
-  backgroundColor: COLORS.brat,
-  marginHorizontal: SPACING.lg,
-  borderRadius: RADIUS.xl,
-  paddingVertical: 18,
-  alignItems: 'center',
-
-  borderWidth: 3,
-  borderColor: COLORS.border,
-
-  ...SHADOW.brat,
-},
-
-saveButtonText: {
-  color: '#000',
-  fontSize: 18,
-  fontWeight: '900',
-  letterSpacing: -0.5,
-},
-  saveButtonText:{ color:'#fff', fontSize:18, fontWeight:'700' },
-  deleteButton:{ backgroundColor:'#721c24', marginHorizontal:24, borderRadius:16, paddingVertical:18, alignItems:'center' },
-  deleteButtonText:{ color:'#fff', fontSize:18, fontWeight:'700' },
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  header: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+    marginVertical: 32,
+  },
+  inputGroup: { marginBottom: 20, paddingHorizontal: 24 },
+  label: { color: '#a0a0cc', marginBottom: 6, fontWeight: '600' },
+  input: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    color: COLORS.text,
+    fontSize: 16,
+  },
+  inputError: { borderColor: '#c0392b' },
+  errorText: {
+    marginTop: 6,
+    color: '#c0392b',
+    fontSize: 13,
+  },
+  switchGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    marginBottom: 40,
+  },
+  switchLabel: { color: '#a0a0cc', fontWeight: '600' },
+  saveButton: {
+    backgroundColor: COLORS.brat,
+    marginHorizontal: SPACING.lg,
+    paddingVertical: 18,
+    borderRadius: RADIUS.xl,
+    alignItems: 'center',
+    ...SHADOW.brat,
+  },
+  saveButtonText: { color: '#000', fontWeight: '900', fontSize: 18 },
+  deleteButton: {
+    backgroundColor: '#721c24',
+    marginHorizontal: 24,
+    marginTop: 10,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  deleteButtonText: { color: '#fff', fontWeight: '700' },
 });
