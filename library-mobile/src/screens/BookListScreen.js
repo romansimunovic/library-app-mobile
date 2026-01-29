@@ -16,6 +16,14 @@ import { getBooks, deleteBook, searchBooks } from '../api/api';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, SHADOW } from '../theme/theme';
 
+
+const safeYear = y => {
+  const num = parseInt(y);
+  return !isNaN(num) && num >= 0 ? num : 0;
+};
+
+
+
 export default function BookListScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,11 +40,24 @@ export default function BookListScreen({ navigation }) {
       let data = search ? await searchBooks(search) : await getBooks();
 
       switch (sortOption) {
-        case 'NEWEST': data.sort((a, b) => b.publishedYear - a.publishedYear); break;
-        case 'OLDEST': data.sort((a, b) => a.publishedYear - b.publishedYear); break;
-        case 'A-Z': data.sort((a, b) => a.title.localeCompare(b.title)); break;
-        case 'Z-A': data.sort((a, b) => b.title.localeCompare(a.title)); break;
-      }
+  case 'NEWEST':
+    data.sort((a, b) => safeYear(b.publishedYear) - safeYear(a.publishedYear));
+    break;
+
+  case 'OLDEST':
+    data.sort((a, b) => safeYear(a.publishedYear) - safeYear(b.publishedYear));
+    break;
+
+  case 'A-Z':
+    data.sort((a, b) => a.title.localeCompare(b.title));
+    break;
+
+  case 'Z-A':
+    data.sort((a, b) => b.title.localeCompare(a.title));
+    break;
+}
+
+
       setBooks(data);
     } catch (err) {
       Alert.alert('SYSTEM ERROR.', err.message);
@@ -52,16 +73,29 @@ export default function BookListScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
-  const handleDelete = (id, title) => {
-    Alert.alert(
-      'WIPE ENTRY?',
-      `DELETE "${title.toUpperCase()}" FOREVER?`,
-      [
-        { text: 'NO.', style: 'cancel' },
-        { text: 'YES. DELETE.', style: 'destructive', onPress: async () => { await deleteBook(id); fetchBooks(); } },
-      ]
-    );
-  };
+ const handleDelete = async (id, title) => {
+  Alert.alert(
+    'WIPE ENTRY?',
+    `DELETE "${title.toUpperCase()}" FOREVER?`,
+    [
+      { text: 'NO.', style: 'cancel' },
+      { 
+        text: 'YES. DELETE.', 
+        style: 'destructive', 
+        onPress: async () => {
+          try {
+            await deleteBook(id);
+            fetchBooks(); // refrešaj listu nakon brisanja
+            Alert.alert('DELETED.', `"${title}" removed from the archive.`);
+          } catch (err) {
+            Alert.alert('ERROR.', err.message);
+          }
+        } 
+      },
+    ]
+  );
+};
+
 
   return (
     <View style={styles.container}>
@@ -96,14 +130,18 @@ export default function BookListScreen({ navigation }) {
             <View style={styles.searchBox}>
               <Text style={styles.searchLabel}>SEARCH. THE. ARCHIVE.</Text>
               <TextInput
-                style={styles.searchInput}
-                placeholder="FIND. A. VIBE..."
-                placeholderTextColor="rgba(0,0,0,0.3)"
-                autoFocus
-                value={search}
-                onChangeText={setSearch}
-                onSubmitEditing={() => setSearchVisible(false)}
-              />
+  style={styles.searchInput}
+  placeholder="FIND. A. VIBE..."
+  placeholderTextColor="rgba(0,0,0,0.3)"
+  autoFocus
+  value={search}
+  onChangeText={setSearch}
+  onSubmitEditing={() => setSearchVisible(false)}
+  keyboardType="default"
+  autoCorrect={false}
+  autoCapitalize="none"
+/>
+
               <TouchableOpacity style={styles.closeBtn} onPress={() => setSearchVisible(false)}>
                 <Text style={styles.closeBtnText}>[ CLOSE ]</Text>
               </TouchableOpacity>
