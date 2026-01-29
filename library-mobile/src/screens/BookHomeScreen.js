@@ -1,166 +1,207 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Platform, Animated 
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+  Animated,
+  Image,
 } from 'react-native';
-import { getBooks } from '../api/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { getBooks } from '../api/api';
+import { COLORS, SPACING, SHADOW } from '../theme/theme';
 
 export default function BookHomeScreen({ navigation }) {
   const [stats, setStats] = useState({ total: 0, available: 0, latestYear: '-' });
   const [loading, setLoading] = useState(true);
-  const [fadeAnim] = useState(new Animated.Value(0));
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        setLoading(true);
         const books = await getBooks();
         const available = books.filter(b => b.available).length;
-        const latestYear = books.length > 0 ? Math.max(...books.map(b => b.publishedYear || 0)) : '-';
+        const latestYear = books.length > 0 
+          ? Math.max(...books.map(b => b.publishedYear || 0)) 
+          : '-';
+
         setStats({ total: books.length, available, latestYear });
 
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 700,
+          duration: 800,
           useNativeDriver: true,
         }).start();
       } catch (err) {
-        console.log('Error fetching statistics:', err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchStats();
   }, []);
 
-  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
-  const renderCard = (icon, title, subtitle, onPress, color='#1a1a2e') => {
-    const scaleAnim = new Animated.Value(1);
-
-    return (
-      <AnimatedTouchable
-        style={[styles.card, { backgroundColor: color, transform: [{ scale: scaleAnim }] }]}
-        onPress={onPress}
-        onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start()}
-        onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true }).start()}
-        activeOpacity={0.9}
-      >
-        <View style={styles.cardContent}>
-          {icon}
-          <View style={{ marginLeft: 16 }}>
-            <Text style={styles.cardTitle}>{title}</Text>
-            <Text style={styles.cardSubtitle}>{subtitle}</Text>
-          </View>
-        </View>
-      </AnimatedTouchable>
-    );
-  };
-
-  const renderStatTile = (icon, value, label, color) => (
-    <Animated.View style={[styles.statTile, { backgroundColor: color, opacity: fadeAnim }]}>
-      {icon}
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </Animated.View>
+  const ActionCard = ({ title, subtitle, onPress, isSecondary }) => (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      style={[
+        styles.actionCard, 
+        isSecondary ? styles.actionCardSecondary : styles.actionCardPrimary
+      ]}
+      onPress={onPress}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.actionTitle, { color: isSecondary ? COLORS.text : '#000' }]}>
+          {title.toUpperCase()}.
+        </Text>
+        <Text style={[styles.actionSubtitle, { color: isSecondary ? COLORS.muted : '#333' }]}>
+          {subtitle.toUpperCase()}
+        </Text>
+      </View>
+      <Ionicons 
+        name="arrow-forward-sharp" 
+        size={24} 
+        color={isSecondary ? COLORS.brat : '#000'} 
+      />
+    </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
+        {/* BIG ENERGY HEADER */}
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome to Library App!</Text>
-          <Text style={styles.subtitle}>Browse books, add new ones, and track key stats</Text>
+          <Text style={styles.kicker}>THE ARCHIVE.</Text>
+          <Text style={styles.title}>LIBRARY.{"\n"}CONTROL.</Text>
+          
+          <View style={styles.imageContainer}>
+            <Image
+              source={require('../../assets/images/brat.png')}
+              style={styles.cover}
+              resizeMode="cover"
+            />
+            <View style={styles.imageGlitch} />
+          </View>
         </View>
 
-        {/* Action Cards */}
-        <View style={styles.cardsContainer}>
-          {renderCard(
-            <Ionicons name="book" size={36} color="#fff" />,
-            'View Books',
-            'See all titles and details',
-            () => navigation.navigate('BookList')
-          )}
-          {renderCard(
-            <MaterialIcons name="library-add" size={36} color="#fff" />,
-            'Add New Book',
-            'Enter a new book',
-            () => navigation.navigate('BookForm'),
-            '#2b2b5a'
-          )}
-        </View>
-
-        {/* Statistics Tiles */}
-        <View style={styles.statsContainer}>
+        {/* STATS STRIP */}
+        <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
           {loading ? (
-            <ActivityIndicator color="#ffffff" size="large" style={{ marginTop: 12 }} />
+            <ActivityIndicator color={COLORS.brat} />
           ) : (
             <>
-              {renderStatTile(
-                <FontAwesome5 name="book" size={28} color="#fff" />,
-                stats.total,
-                'Total Books',
-                '#216e44'
-              )}
-              {renderStatTile(
-                <Ionicons name="checkmark-circle" size={28} color="#fff" />,
-                stats.available,
-                'Available',
-                '#2d2d58'
-              )}
-              {renderStatTile(
-                <MaterialIcons name="update" size={28} color="#fff" />,
-                stats.latestYear,
-                'Latest Year',
-                '#8a1a1a'
-              )}
+              <View style={styles.statBox}>
+                <Text style={styles.statNum}>{stats.total}</Text>
+                <Text style={styles.statLabel}>TOTAL.</Text>
+              </View>
+              <View style={[styles.statBox, styles.statBoxCenter]}>
+                <Text style={styles.statNum}>{stats.available}</Text>
+                <Text style={styles.statLabel}>READY.</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statNum}>{stats.latestYear}</Text>
+                <Text style={styles.statLabel}>NEWEST.</Text>
+              </View>
             </>
           )}
+        </Animated.View>
+
+        {/* ACTIONS */}
+        <View style={styles.actions}>
+          <ActionCard
+            title="Browse Books"
+            subtitle="View full inventory"
+            onPress={() => navigation.navigate('BookList')}
+          />
+          <ActionCard
+            title="Add New Entry"
+            subtitle="Update the library"
+            onPress={() => navigation.navigate('BookForm')}
+            isSecondary
+          />
         </View>
+
+        <Text style={styles.footerBranding}>SO. BRAT. V1.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#0f0f23', paddingTop: Platform.OS === 'android' ? 24 : 0 },
-  container: { flexGrow: 1, padding: 24, alignItems: 'center', justifyContent: 'flex-start' },
-
-  header: { alignItems: 'center', marginBottom: 32 },
-  title: { fontSize: 32, fontWeight: '900', color: '#fff', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#a0a0cc', textAlign: 'center', marginTop: 6, maxWidth: 320 },
-
-  cardsContainer: { width: '100%', alignItems: 'center', gap: 16, marginBottom: 32 },
-  card: {
-    width: '100%',
-    padding: 20,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
+  safeArea: { flex: 1, backgroundColor: COLORS.bg },
+  container: { padding: SPACING.lg, paddingBottom: 40 },
+  
+  header: { marginBottom: 30, marginTop: 20 },
+  kicker: { color: COLORS.brat, fontWeight: '900', letterSpacing: 4, fontSize: 14 },
+  title: { 
+    fontSize: 56, 
+    fontWeight: '900', 
+    color: COLORS.text, 
+    lineHeight: 52, 
+    letterSpacing: -3,
+    marginTop: 5
   },
-  cardContent: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  cardSubtitle: { fontSize: 14, color: '#d0d0f0' },
 
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  statTile: { 
-    flex: 1, 
-    marginHorizontal: 6, 
-    borderRadius: 16, 
-    paddingVertical: 20, 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width:0, height:5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+  imageContainer: { marginTop: 20, position: 'relative' },
+  cover: { 
+    width: '100%', 
+    height: 200, 
+    borderWidth: 3, 
+    borderColor: COLORS.brat,
+    ...SHADOW.brat 
   },
-  statValue: { fontSize: 24, fontWeight: '700', color: '#fff', marginTop: 6 },
-  statLabel: { fontSize: 14, color: '#e6e6e6', marginTop: 4, textAlign: 'center' },
+  imageGlitch: {
+    position: 'absolute',
+    top: -5,
+    left: 5,
+    right: -5,
+    bottom: 5,
+    borderWidth: 1,
+    borderColor: COLORS.brat,
+    zIndex: -1,
+  },
+
+  statsRow: { 
+    flexDirection: 'row', 
+    backgroundColor: COLORS.surface, 
+    borderWidth: 2, 
+    borderColor: '#222',
+    marginBottom: 30
+  },
+  statBox: { flex: 1, padding: 15, alignItems: 'center' },
+  statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#222' },
+  statNum: { fontSize: 24, fontWeight: '900', color: COLORS.brat },
+  statLabel: { fontSize: 10, fontWeight: '800', color: COLORS.muted, letterSpacing: 1 },
+
+  actions: { gap: 15 },
+  actionCard: { 
+    padding: 20, 
+    flexDirection: 'row', 
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#000'
+  },
+  actionCardPrimary: { 
+    backgroundColor: COLORS.brat, 
+    ...SHADOW.brat 
+  },
+  actionCardSecondary: { 
+    backgroundColor: COLORS.surface, 
+    borderColor: COLORS.brat 
+  },
+  actionTitle: { fontSize: 22, fontWeight: '900', letterSpacing: -1 },
+  actionSubtitle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
+
+  footerBranding: { 
+    textAlign: 'center', 
+    marginTop: 40, 
+    color: '#222', 
+    fontWeight: '900', 
+    fontSize: 12, 
+    letterSpacing: 5 
+  }
 });

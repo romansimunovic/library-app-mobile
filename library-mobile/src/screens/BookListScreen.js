@@ -1,129 +1,125 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, FlatList, Alert, Text, StyleSheet, TouchableOpacity, TextInput, Modal, TouchableWithoutFeedback 
+import {
+  View,
+  FlatList,
+  Alert,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import BookItem from '../components/BookItem';
 import { getBooks, deleteBook, searchBooks } from '../api/api';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { COLORS, SPACING, SHADOW } from '../theme/theme';
 
-/**
- * Screen displaying the list of books.
- * Supports searching, sorting, adding, editing, and deleting books.
- */
 export default function BookListScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [sortOption, setSortOption] = useState('Newest');
+  const [sortOption, setSortOption] = useState('NEWEST');
   const [searchVisible, setSearchVisible] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
+
+  const SORT_OPTIONS = ['NEWEST', 'OLDEST', 'A-Z', 'Z-A'];
 
   const fetchBooks = async () => {
     try {
       setLoading(true);
       let data = search ? await searchBooks(search) : await getBooks();
 
-      switch(sortOption) {
-        case 'Newest': data.sort((a,b)=>b.publishedYear - a.publishedYear); break;
-        case 'Oldest': data.sort((a,b)=>a.publishedYear - b.publishedYear); break;
-        case 'A-Z': data.sort((a,b)=>a.title.localeCompare(b.title)); break;
-        case 'Z-A': data.sort((a,b)=>b.title.localeCompare(a.title)); break;
+      switch (sortOption) {
+        case 'NEWEST': data.sort((a, b) => b.publishedYear - a.publishedYear); break;
+        case 'OLDEST': data.sort((a, b) => a.publishedYear - b.publishedYear); break;
+        case 'A-Z': data.sort((a, b) => a.title.localeCompare(b.title)); break;
+        case 'Z-A': data.sort((a, b) => b.title.localeCompare(a.title)); break;
       }
-
       setBooks(data);
-    } catch (error) {
-      Alert.alert('Error', error.message);
+    } catch (err) {
+      Alert.alert('SYSTEM ERROR.', err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { fetchBooks(); }, [sortOption, search]);
+  
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', fetchBooks);
     return unsubscribe;
   }, [navigation]);
 
-  const handleDelete = (id) => {
+  const handleDelete = (id, title) => {
     Alert.alert(
-      'Delete Confirmation',
-      'Are you sure you want to delete this book?',
+      'WIPE ENTRY?',
+      `DELETE "${title.toUpperCase()}" FOREVER?`,
       [
-        { text: 'No', style: 'cancel' },
-        { text: 'Yes', style: 'destructive', onPress: async () => { await deleteBook(id); fetchBooks(); } },
+        { text: 'NO.', style: 'cancel' },
+        { text: 'YES. DELETE.', style: 'destructive', onPress: async () => { await deleteBook(id); fetchBooks(); } },
       ]
     );
   };
 
-  const SORT_OPTIONS = ['Newest','Oldest','A-Z','Z-A'];
-
   return (
     <View style={styles.container}>
-      {/* HEADER */}
+      {/* AGGRESSIVE HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Books</Text>
+        <Text style={styles.kicker}>THE COLLECTION.</Text>
+        <Text style={styles.headerTitle}>READING. IS.{"\n"}SO. BRAT.</Text>
       </View>
 
-      {/* ACTION ROW */}
+      {/* TIGHT ACTION ROW */}
       <View style={styles.actionRow}>
-        {/* SEARCH ICON */}
-        <TouchableOpacity onPress={()=>setSearchVisible(true)} style={styles.searchIconButton}>
-          <Ionicons name="search" size={28} color="#fff" />
+        <TouchableOpacity style={[styles.actionBtn, styles.bgBrat]} onPress={() => setSearchVisible(true)}>
+          <Ionicons name="search-sharp" size={20} color="#000" />
+          <Text style={styles.btnLabel}>SEARCH.</Text>
         </TouchableOpacity>
 
-        {/* SORT DROPDOWN */}
-        <TouchableOpacity 
-          style={styles.sortButton} 
-          onPress={()=>setDropdownVisible(true)}
-        >
-          <Text style={styles.sortButtonText}>{sortOption}</Text>
-          <MaterialIcons name="arrow-drop-down" size={24} color="#fff" />
+        <TouchableOpacity style={[styles.actionBtn, styles.bgDark]} onPress={() => setDropdownVisible(true)}>
+          <Text style={styles.btnLabelWhite}>{sortOption}.</Text>
+          <MaterialIcons name="arrow-drop-down" size={20} color={COLORS.brat} />
         </TouchableOpacity>
 
-        {/* ADD BUTTON */}
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={()=>navigation.navigate('BookForm')}
-        >
-          <Ionicons name="add" size={20} color="#fff" style={{ marginRight: 6 }} />
-          <Text style={styles.addButtonText}>Add Book</Text>
+        <TouchableOpacity style={[styles.actionBtn, styles.bgBrat]} onPress={() => navigation.navigate('BookForm')}>
+          <Ionicons name="add-sharp" size={20} color="#000" />
+          <Text style={styles.btnLabel}>ADD.</Text>
         </TouchableOpacity>
       </View>
 
-      {/* SEARCH MODAL */}
-      <Modal visible={searchVisible} animationType="fade" transparent>
-        <TouchableWithoutFeedback onPress={()=>setSearchVisible(false)}>
+      {/* FULL SCREEN SEARCH MODAL */}
+      <Modal visible={searchVisible} transparent animationType="none">
+        <TouchableWithoutFeedback onPress={() => setSearchVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.searchModal}>
+            <View style={styles.searchBox}>
+              <Text style={styles.searchLabel}>SEARCH. THE. ARCHIVE.</Text>
               <TextInput
-                style={styles.searchInputModal}
-                placeholder="Type book title"
-                placeholderTextColor="#aaa"
-                value={search}
+                style={styles.searchInput}
+                placeholder="FIND. A. VIBE..."
+                placeholderTextColor="rgba(0,0,0,0.3)"
                 autoFocus
+                value={search}
                 onChangeText={setSearch}
-                onSubmitEditing={() => { fetchBooks(); setSearchVisible(false); }}
+                onSubmitEditing={() => setSearchVisible(false)}
               />
-              <TouchableOpacity onPress={() => { fetchBooks(); setSearchVisible(false); }}>
-                <Ionicons name="search" size={28} color="#fff" />
+              <TouchableOpacity style={styles.closeBtn} onPress={() => setSearchVisible(false)}>
+                <Text style={styles.closeBtnText}>[ CLOSE ]</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* SORT DROPDOWN MODAL */}
-      <Modal visible={dropdownVisible} animationType="fade" transparent>
-        <TouchableWithoutFeedback onPress={()=>setDropdownVisible(false)}>
+      {/* SORT MODAL */}
+      <Modal visible={dropdownVisible} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => setDropdownVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.dropdownModal}>
-              {SORT_OPTIONS.map((option,index)=>(
-                <TouchableOpacity
-                  key={index}
-                  style={styles.dropdownItem}
-                  onPress={()=>{ setSortOption(option); setDropdownVisible(false); }}
-                >
-                  <Text style={styles.dropdownItemText}>{option}</Text>
+            <View style={styles.dropdownBox}>
+              {SORT_OPTIONS.map((option, i) => (
+                <TouchableOpacity key={i} style={styles.dropdownItem} onPress={() => { setSortOption(option); setDropdownVisible(false); }}>
+                  <Text style={styles.dropdownText}>{option}.</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -131,28 +127,30 @@ export default function BookListScreen({ navigation }) {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* BOOK LIST */}
+      {/* THE LIST */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading books...</Text>
+        <View style={styles.center}>
+          <ActivityIndicator color={COLORS.brat} size="large" />
+          <Text style={styles.statusText}>LOADING. VIBES.</Text>
         </View>
       ) : (
         <FlatList
           data={books}
-          keyExtractor={(item)=>item.bookId}
+          keyExtractor={item => item.bookId.toString()}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No books yet</Text>
-              <Text style={styles.emptySubtext}>Add your first book by pressing the + Add button</Text>
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>NO. BOOKS. FOUND.</Text>
+              <Text style={styles.emptySub}>Start adding to the archive.</Text>
             </View>
           }
-          renderItem={({item})=>(
+          renderItem={({ item }) => (
             <BookItem
               book={item}
-              onPress={()=>navigation.navigate('BookDetail',{ bookId:item.bookId })}
-              onDelete={()=>handleDelete(item.bookId)}
-              onEdit={()=>navigation.navigate('BookForm',{ bookId:item.bookId })}
+              onPress={() => navigation.navigate('BookDetail', { bookId: item.bookId })}
+              onEdit={() => navigation.navigate('BookForm', { bookId: item.bookId })}
+              onDelete={() => handleDelete(item.bookId, item.title)}
             />
           )}
         />
@@ -162,34 +160,60 @@ export default function BookListScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container:{ flex:1, backgroundColor:'#0f0f23' },
-  header:{ paddingHorizontal:24, paddingTop:60, paddingBottom:20, backgroundColor:'#1a1a2e', alignItems:'center' },
-  headerTitle:{ fontSize:28, fontWeight:'800', color:'#fff' },
+  container: { flex: 1, backgroundColor: COLORS.bg, paddingHorizontal: SPACING.md },
+  
+  header: { paddingTop: 60, marginBottom: 25 },
+  kicker: { color: COLORS.brat, fontWeight: '900', letterSpacing: 3, fontSize: 12 },
+  headerTitle: { 
+    fontSize: 48, 
+    fontWeight: '900', 
+    color: COLORS.text, 
+    letterSpacing: -3, 
+    lineHeight: 44,
+    marginTop: 5
+  },
 
-  actionRow:{ flexDirection:'row', alignItems:'center', paddingHorizontal:24, paddingVertical:16, gap:12 },
+  actionRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  actionBtn: { 
+    flex: 1, 
+    height: 50, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000'
+  },
+  bgBrat: { backgroundColor: COLORS.brat, ...SHADOW.brat },
+  bgDark: { backgroundColor: '#111' },
+  btnLabel: { fontWeight: '900', fontSize: 11, marginLeft: 4, color: '#000' },
+  btnLabelWhite: { fontWeight: '900', fontSize: 11, marginRight: 4, color: '#fff' },
 
-  searchIconButton:{ backgroundColor:'#2a2a40', padding:12, borderRadius:14 },
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.95)', 
+    justifyContent: 'center', 
+    padding: 20 
+  },
+  searchBox: { 
+    backgroundColor: COLORS.brat, 
+    padding: 30, 
+    borderWidth: 4, 
+    borderColor: '#000' 
+  },
+  searchLabel: { fontWeight: '900', fontSize: 12, marginBottom: 10 },
+  searchInput: { fontSize: 32, fontWeight: '900', color: '#000', letterSpacing: -1 },
+  closeBtn: { marginTop: 20, alignSelf: 'flex-end' },
+  closeBtnText: { fontWeight: '900', fontSize: 12 },
 
-  sortButton:{ flexDirection:'row', alignItems:'center', backgroundColor:'#4c4c6a', paddingHorizontal:16, paddingVertical:12, borderRadius:14, gap:6 },
-  sortButtonText:{ color:'#fff', fontWeight:'700', fontSize:14 },
+  dropdownBox: { backgroundColor: '#111', borderWidth: 2, borderColor: COLORS.brat },
+  dropdownItem: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#222' },
+  dropdownText: { color: '#fff', fontWeight: '900', fontSize: 16, textAlign: 'center' },
 
-  addButton:{ flexDirection:'row', alignItems:'center', backgroundColor:'#0f552d', paddingHorizontal:16, paddingVertical:12, borderRadius:14 },
-  addButtonText:{ color:'#fff', fontWeight:'700', fontSize:14 },
+  list: { paddingBottom: 100 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  statusText: { color: COLORS.brat, fontWeight: '900', marginTop: 10, letterSpacing: 2 },
 
-  modalOverlay:{ flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', alignItems:'center' },
-  searchModal:{ flexDirection:'row', backgroundColor:'#1a1a2e', borderRadius:14, paddingHorizontal:12, alignItems:'center', width:'85%', height:50 },
-  searchInputModal:{ flex:1, color:'#fff', fontSize:16, marginRight:8 },
-
-  dropdownModal:{ backgroundColor:'#1a1a2e', borderRadius:14, width:'60%', paddingVertical:8 },
-  dropdownItem:{ paddingVertical:12, paddingHorizontal:16 },
-  dropdownItemText:{ color:'#fff', fontSize:16 },
-
-  list:{ paddingHorizontal:24, paddingTop:8, paddingBottom:60, flexGrow:1 },
-
-  loadingContainer:{ flex:1, justifyContent:'center', alignItems:'center' },
-  loadingText:{ color:'#a0a0cc', fontSize:16 },
-
-  emptyContainer:{ flex:1, justifyContent:'center', alignItems:'center', paddingTop:80 },
-  emptyText:{ fontSize:20, fontWeight:'600', color:'#fff', marginBottom:8 },
-  emptySubtext:{ fontSize:16, color:'#a0a0cc', textAlign:'center', lineHeight:24 },
+  empty: { marginTop: 100, alignItems: 'center' },
+  emptyTitle: { fontSize: 24, fontWeight: '900', color: '#444' },
+  emptySub: { color: '#666', marginTop: 5, fontWeight: '700' },
 });
