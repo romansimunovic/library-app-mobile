@@ -1,7 +1,7 @@
 # 🌌 ETHEREAL. ARCHIVE.
 
 <p align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/en/6/63/Ray_of_Light_Madonna.png" width="400" alt="Madonna - Ray of Light Inspiration">
+  <img src="https://en.wikipedia.org/wiki/Ray_of_Light#/media/File:Ray_of_Light_Madonna.png" width="400" alt="Madonna - Ray of Light Inspiration">
 </p>
 > **"Quicker than a ray of light, we are drifting into the digital consciousness."**
 
