@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://m.media-amazon.com/images/I/61IwmGWFefL.jpg" width="400" alt="Madonna - Ray of Light Inspiration">
 </p>
-> **"Quicker than a ray of light, we are drifting into the digital consciousness."**
+**"Quicker than a ray of light, we are drifting into the digital consciousness."**
 
 ---
 
