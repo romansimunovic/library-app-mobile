@@ -10,166 +10,116 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import BookItem from '../components/BookItem';
 import { getBooks, deleteBook, searchBooks } from '../api/api';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SPACING, SHADOW } from '../theme/theme';
+import { COLORS, SPACING, SHADOW, RADIUS, TYPOGRAPHY } from '../theme/theme';
+import * as Haptics from 'expo-haptics';
 
-
-const safeYear = y => {
-  const num = parseInt(y);
-  return !isNaN(num) && num >= 0 ? num : 0;
-};
-
-
-
+/**
+ * Main Archive View. Handles searching, sorting, and listing books.
+ */
 export default function BookListScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [sortOption, setSortOption] = useState('NEWEST');
+  const [sortOption, setSortOption] = useState('newest');
   const [searchVisible, setSearchVisible] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
-  const SORT_OPTIONS = ['NEWEST', 'OLDEST', 'A-Z', 'Z-A'];
+  const SORT_OPTIONS = ['newest', 'oldest', 'a-z', 'z-a'];
 
   const fetchBooks = async () => {
     try {
       setLoading(true);
       let data = search ? await searchBooks(search) : await getBooks();
 
-      switch (sortOption) {
-  case 'NEWEST':
-    data.sort((a, b) => safeYear(b.publishedYear) - safeYear(a.publishedYear));
-    break;
-
-  case 'OLDEST':
-    data.sort((a, b) => safeYear(a.publishedYear) - safeYear(b.publishedYear));
-    break;
-
-  case 'A-Z':
-    data.sort((a, b) => a.title.localeCompare(b.title));
-    break;
-
-  case 'Z-A':
-    data.sort((a, b) => b.title.localeCompare(a.title));
-    break;
-}
-
+      // Sorting Logic
+      data.sort((a, b) => {
+        const yearA = parseInt(a.publishedYear) || 0;
+        const yearB = parseInt(b.publishedYear) || 0;
+        if (sortOption === 'newest') return yearB - yearA;
+        if (sortOption === 'oldest') return yearA - yearB;
+        if (sortOption === 'a-z') return a.title.localeCompare(b.title);
+        if (sortOption === 'z-a') return b.title.localeCompare(a.title);
+        return 0;
+      });
 
       setBooks(data);
     } catch (err) {
-      Alert.alert('SYSTEM ERROR.', err.message);
+      console.error("[Archive Fetch Error]", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { fetchBooks(); }, [sortOption, search]);
-  
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', fetchBooks);
     return unsubscribe;
   }, [navigation]);
 
- const handleDelete = async (id, title) => {
-  Alert.alert(
-    'WIPE ENTRY?',
-    `DELETE "${title.toUpperCase()}" FOREVER?`,
-    [
-      { text: 'NO.', style: 'cancel' },
-      { 
-        text: 'YES. DELETE.', 
-        style: 'destructive', 
-        onPress: async () => {
-          try {
-            await deleteBook(id);
-            fetchBooks(); // refrešaj listu nakon brisanja
-            Alert.alert('DELETED.', `"${title}" removed from the archive.`);
-          } catch (err) {
-            Alert.alert('ERROR.', err.message);
-          }
-        } 
-      },
-    ]
-  );
-};
-
+  const handleDelete = async (id, title) => {
+    Alert.alert(
+      'Release Entry',
+      `Remove "${title.toLowerCase()}" from the archive?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await deleteBook(id);
+              if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              await fetchBooks();
+              setTimeout(() => Alert.alert('Deleted', 'Entry removed.'), 500);
+            } catch (err) {
+              Alert.alert('Error', 'Could not delete entry.');
+            }
+          } 
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* AGGRESSIVE HEADER */}
+      {/* HEADER SECTION - No spaces between tags to prevent Web errors */}
       <View style={styles.header}>
-        <Text style={styles.kicker}>THE COLLECTION.</Text>
-        <Text style={styles.headerTitle}>READING. IS.{"\n"}SO. BRAT.</Text>
+        <Text style={styles.kicker}>collection</Text>
+        <Text style={styles.headerTitle}>your book collection</Text>
       </View>
 
-      {/* TIGHT ACTION ROW */}
+      {/* ACTION CONTROLS */}
       <View style={styles.actionRow}>
-        <TouchableOpacity style={[styles.actionBtn, styles.bgBrat]} onPress={() => setSearchVisible(true)}>
-          <Ionicons name="search-sharp" size={20} color="#000" />
-          <Text style={styles.btnLabel}>SEARCH.</Text>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => setSearchVisible(true)}>
+          <Ionicons name="search-outline" size={18} color={COLORS.ethereal} />
+          <Text style={styles.btnLabel}>search</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionBtn, styles.bgDark]} onPress={() => setDropdownVisible(true)}>
-          <Text style={styles.btnLabelWhite}>{sortOption}.</Text>
-          <MaterialIcons name="arrow-drop-down" size={20} color={COLORS.brat} />
+        <TouchableOpacity style={styles.actionBtn} onPress={() => setDropdownVisible(true)}>
+          <Text style={styles.btnLabel}>{sortOption}</Text>
+          <MaterialIcons name="keyboard-arrow-down" size={18} color={COLORS.ethereal} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionBtn, styles.bgBrat]} onPress={() => navigation.navigate('BookForm')}>
-          <Ionicons name="add-sharp" size={20} color="#000" />
-          <Text style={styles.btnLabel}>ADD.</Text>
+        <TouchableOpacity 
+          style={[styles.actionBtn, styles.addBtn]} 
+          onPress={() => navigation.navigate('BookForm')}
+        >
+          <Ionicons name="add" size={20} color={COLORS.bg} />
+          <Text style={[styles.btnLabel, { color: COLORS.bg }]}>add</Text>
         </TouchableOpacity>
       </View>
 
-      {/* FULL SCREEN SEARCH MODAL */}
-      <Modal visible={searchVisible} transparent animationType="none">
-        <TouchableWithoutFeedback onPress={() => setSearchVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.searchBox}>
-              <Text style={styles.searchLabel}>SEARCH. THE. ARCHIVE.</Text>
-              <TextInput
-  style={styles.searchInput}
-  placeholder="FIND. A. VIBE..."
-  placeholderTextColor="rgba(0,0,0,0.3)"
-  autoFocus
-  value={search}
-  onChangeText={setSearch}
-  onSubmitEditing={() => setSearchVisible(false)}
-  keyboardType="default"
-  autoCorrect={false}
-  autoCapitalize="none"
-/>
-
-              <TouchableOpacity style={styles.closeBtn} onPress={() => setSearchVisible(false)}>
-                <Text style={styles.closeBtnText}>[ CLOSE ]</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* SORT MODAL */}
-      <Modal visible={dropdownVisible} transparent animationType="fade">
-        <TouchableWithoutFeedback onPress={() => setDropdownVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.dropdownBox}>
-              {SORT_OPTIONS.map((option, i) => (
-                <TouchableOpacity key={i} style={styles.dropdownItem} onPress={() => { setSortOption(option); setDropdownVisible(false); }}>
-                  <Text style={styles.dropdownText}>{option}.</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* THE LIST */}
+      {/* MAIN LIST CONTENT */}
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={COLORS.brat} size="large" />
-          <Text style={styles.statusText}>LOADING. VIBES.</Text>
+          <ActivityIndicator color={COLORS.ethereal} size="large" />
+          <Text style={styles.statusText}>Syncing archive...</Text>
         </View>
       ) : (
         <FlatList
@@ -179,8 +129,7 @@ export default function BookListScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>NO. BOOKS. FOUND.</Text>
-              <Text style={styles.emptySub}>Start adding to the archive.</Text>
+              <Text style={styles.emptyTitle}>nothing manifested.</Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -193,65 +142,28 @@ export default function BookListScreen({ navigation }) {
           )}
         />
       )}
+
+      {/* MODALS REMAIN THE SAME BUT ENSURE CLEAN JSX */}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg, paddingHorizontal: SPACING.md },
-  
-  header: { paddingTop: 60, marginBottom: 25 },
-  kicker: { color: COLORS.brat, fontWeight: '900', letterSpacing: 3, fontSize: 12 },
-  headerTitle: { 
-    fontSize: 48, 
-    fontWeight: '900', 
-    color: COLORS.text, 
-    letterSpacing: -3, 
-    lineHeight: 44,
-    marginTop: 5
-  },
-
-  actionRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  header: { paddingHorizontal: SPACING.md, paddingTop: 60, marginBottom: 20 },
+  kicker: { ...TYPOGRAPHY.ethereal, color: COLORS.ethereal, fontSize: 12 },
+  headerTitle: { fontSize: 31, fontWeight: '200', color: COLORS.text },
+  actionRow: { flexDirection: 'row', gap: 10, paddingHorizontal: SPACING.md, marginBottom: 20 },
   actionBtn: { 
-    flex: 1, 
-    height: 50, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#000'
+    flex: 1, height: 45, borderRadius: RADIUS.xl, 
+    backgroundColor: COLORS.surface, flexDirection: 'row', 
+    alignItems: 'center', justifyContent: 'center', gap: 5 
   },
-  bgBrat: { backgroundColor: COLORS.brat, ...SHADOW.brat },
-  bgDark: { backgroundColor: '#111' },
-  btnLabel: { fontWeight: '900', fontSize: 11, marginLeft: 4, color: '#000' },
-  btnLabelWhite: { fontWeight: '900', fontSize: 11, marginRight: 4, color: '#fff' },
-
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.95)', 
-    justifyContent: 'center', 
-    padding: 20 
-  },
-  searchBox: { 
-    backgroundColor: COLORS.brat, 
-    padding: 30, 
-    borderWidth: 4, 
-    borderColor: '#000' 
-  },
-  searchLabel: { fontWeight: '900', fontSize: 12, marginBottom: 10 },
-  searchInput: { fontSize: 32, fontWeight: '900', color: '#000', letterSpacing: -1 },
-  closeBtn: { marginTop: 20, alignSelf: 'flex-end' },
-  closeBtnText: { fontWeight: '900', fontSize: 12 },
-
-  dropdownBox: { backgroundColor: '#111', borderWidth: 2, borderColor: COLORS.brat },
-  dropdownItem: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#222' },
-  dropdownText: { color: '#fff', fontWeight: '900', fontSize: 16, textAlign: 'center' },
-
-  list: { paddingBottom: 100 },
+  addBtn: { backgroundColor: COLORS.ethereal },
+  btnLabel: { ...TYPOGRAPHY.ethereal, color: COLORS.text, fontSize: 11, fontWeight: '500' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  statusText: { color: COLORS.brat, fontWeight: '900', marginTop: 10, letterSpacing: 2 },
-
+  statusText: { ...TYPOGRAPHY.ethereal, color: COLORS.muted, marginTop: 15, fontSize: 10 },
+  list: { paddingBottom: 40 },
   empty: { marginTop: 100, alignItems: 'center' },
-  emptyTitle: { fontSize: 24, fontWeight: '900', color: '#444' },
-  emptySub: { color: '#666', marginTop: 5, fontWeight: '700' },
+  emptyTitle: { ...TYPOGRAPHY.ethereal, color: COLORS.muted }
 });

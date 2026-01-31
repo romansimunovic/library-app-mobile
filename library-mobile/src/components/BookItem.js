@@ -1,61 +1,53 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOW } from '../theme/theme';
 
-export default function BookItem({ book, onPress, onDelete, onEdit }) {
-  // Only apply the neon glow shadow if the book is available
-  const cardGlowStyle = book.available ? {
-    shadowColor: COLORS.brat,
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8, // For Android support
-    borderColor: COLORS.brat,
-  } : {
-    borderColor: '#333',
-    shadowOpacity: 0,
-  };
-
+export default function BookItem({ book, onPress, onEdit, onDelete }) {
   return (
     <TouchableOpacity 
-      activeOpacity={0.9} 
-      style={[styles.card, cardGlowStyle]} 
-      onPress={onPress}
+      activeOpacity={0.8} 
+      onPress={onPress} 
+      style={[styles.card, SHADOW.softGlow]}
     >
-      <View style={styles.mainInfo}>
-        <View style={styles.textContainer}>
-          <Text style={styles.title} numberOfLines={2}>
-            {book.title ? book.title.toUpperCase() : 'UNTITLED.'}
+      {/* TOP ROW: Identity & Actions */}
+      <View style={styles.header}>
+        <View style={styles.identity}>
+          <Text style={styles.title} numberOfLines={1}>
+            {book.title.toLowerCase()}
           </Text>
-          <Text style={styles.author}>
-            BY {book.author ? book.author.toUpperCase() : 'UNKNOWN AUTHOR'}
+          <Text style={styles.author} numberOfLines={1}>
+            {book.author.toLowerCase()}
           </Text>
         </View>
         
-        <View style={[
-          styles.miniBadge, 
-          { backgroundColor: book.available ? COLORS.brat : COLORS.danger }
-        ]}>
-          <Text style={[
-            styles.miniBadgeText, 
-            { color: book.available ? '#000' : '#fff' }
-          ]}>
-            {book.available ? 'IN' : 'OUT'}
-          </Text>
+        <View style={styles.actionCluster}>
+          <TouchableOpacity onPress={onEdit} style={styles.iconBtn}>
+            <Ionicons name="pencil-outline" size={16} color={COLORS.ethereal} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onDelete} style={styles.iconBtn}>
+            <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.metaText}>
-          {book.publishedYear || '0000'}
-        </Text>
-        <View style={styles.btnRow}>
-          <TouchableOpacity onPress={onEdit} style={styles.iconBtn} hitSlop={10}>
-            <MaterialIcons name="edit" size={20} color={COLORS.brat} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onDelete} style={styles.iconBtn} hitSlop={10}>
-            <Ionicons name="trash" size={20} color={COLORS.danger} />
-          </TouchableOpacity>
+      {/* BOTTOM ROW: Technical Specs */}
+      <View style={styles.specRow}>
+        <View style={styles.specItem}>
+          <MaterialCommunityIcons name="identifier" size={12} color={COLORS.muted} />
+          <Text style={styles.specText}>{book.isbn || 'no-isbn'}</Text>
+        </View>
+
+        <View style={styles.specItem}>
+          <MaterialCommunityIcons name="calendar-blank" size={12} color={COLORS.muted} />
+          <Text style={styles.specText}>{book.publishedYear || '—'}</Text>
+        </View>
+
+        <View style={[styles.badge, { borderColor: book.available ? COLORS.ethereal : COLORS.danger }]}>
+          <View style={[styles.statusDot, { backgroundColor: book.available ? COLORS.ethereal : COLORS.danger }]} />
+          <Text style={[styles.badgeText, { color: book.available ? COLORS.ethereal : COLORS.danger }]}>
+            {book.available ? 'present' : 'away'}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -64,67 +56,82 @@ export default function BookItem({ book, onPress, onDelete, onEdit }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    marginBottom: SPACING.md,
-    borderWidth: 2,
-    padding: SPACING.md,
-    borderRadius: 2, // Sharp industrial look
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    marginHorizontal: SPACING.md,
+    marginBottom: 12,
+    borderRadius: RADIUS.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(113, 181, 209, 0.1)',
   },
-  mainInfo: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'flex-start' 
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  textContainer: {
+  identity: {
     flex: 1,
-    paddingRight: 10,
+    marginRight: 10,
   },
   title: {
-    ...TYPOGRAPHY.glitch, 
-    fontSize: 20, 
-    fontWeight: '900', 
-    color: COLORS.text, 
-    letterSpacing: -1, 
-    lineHeight: 22 
+    fontSize: 18,
+    fontWeight: '500',
+    color: COLORS.text,
+    letterSpacing: 0.5,
   },
-  author: { 
-    color: COLORS.muted, 
-    fontWeight: '700', 
-    fontSize: 12, 
-    marginTop: 4,
-    letterSpacing: 1
-  },
-  miniBadge: { 
-    paddingHorizontal: 6, 
-    paddingVertical: 2, 
-    borderWidth: 1,
-    borderColor: '#000',
-    minWidth: 35,
-    alignItems: 'center'
-  },
-  miniBadgeText: { 
-    fontWeight: '900', 
-    fontSize: 10 
-  },
-  footer: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginTop: SPACING.md,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: '#222'
-  },
-  metaText: { 
-    color: '#555', 
+  author: {
+    ...TYPOGRAPHY.ethereal,
     fontSize: 12,
-    fontWeight: '800' 
+    color: COLORS.muted,
+    marginTop: 2,
   },
-  btnRow: { 
-    flexDirection: 'row', 
-    gap: 20 
+  actionCluster: {
+    flexDirection: 'row',
+    gap: 4,
   },
-  iconBtn: { 
-    padding: 2 
+  iconBtn: {
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: RADIUS.md,
+  },
+  specRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  specItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  specText: {
+    ...TYPOGRAPHY.ethereal,
+    fontSize: 10,
+    color: COLORS.muted,
+  },
+  badge: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    gap: 5,
+  },
+  statusDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  badgeText: {
+    ...TYPOGRAPHY.ethereal,
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   }
 });

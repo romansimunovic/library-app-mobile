@@ -1,60 +1,48 @@
-/**
- * BRAT. DESIGN. SYSTEM.
- * A high-contrast, industrial design system inspired by Charli XCX's 6th album.
- */
+import { StyleSheet } from 'react-native';
 
 export const COLORS = {
-  bg: '#0f0f0f',         // Deep obsidian background
-  surface: '#111111',    // Elevated surface for cards
-  text: '#ffffff',       // Pure white typography
-  muted: 'rgba(255,255,255,0.6)', // Lower emphasis text
-  brat: '#89CC04',       // The iconic "Brat" Lime Green
-  bratSoft: '#B4E63A',   // Secondary neon highlight
-  danger: '#D13232',     // Errors and destructive actions
-  border: '#000000',     // Heavy industrial borders
-};
-
-export const RADIUS = {
-  none: 0,               // Default for the sharp industrial look
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 32,
+  // Deep Madonna Blue (The background of the album cover)
+  bg: '#1A5F7A',        
+  // Card surfaces - slightly lighter blue or semi-transparent
+  surface: 'rgba(255, 255, 255, 0.1)', 
+  // Text needs to be white or very pale blue now
+  text: '#FFFFFF',      
+  muted: '#B0D8E8',     
+  // The glowing "Ray" color
+  ethereal: '#71B5D1', 
+  danger: '#FF6B6B',
 };
 
 export const SPACING = {
-  xs: 8,
-  sm: 12,
+  sm: 8,
   md: 16,
   lg: 24,
-  xl: 32,
+  xl: 40,
 };
 
-/**
- * HARD. SHADOWS.
- * Using 100% opacity and 0 radius to create a "sticker" effect.
- */
-export const SHADOW = {
-  brat: {
-    shadowColor: '#000',
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 8, // Support for Android rendering
-  },
-  neonGlow: {
-    shadowColor: '#89CC04',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-  }
+export const RADIUS = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 30, 
 };
 
 export const TYPOGRAPHY = {
-  glitch: {
-    textTransform: 'uppercase',
-    fontWeight: '900',
-    letterSpacing: -2,
+  header: {
+    fontWeight: '200',
+  },
+  ethereal: {
+    letterSpacing: 2,
+    textTransform: 'lowercase',
   }
+};
+
+export const SHADOW = {
+  softGlow: {
+    shadowColor: '#71B5D1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 8,
+  },
 };

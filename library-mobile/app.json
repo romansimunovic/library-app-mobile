@@ -7,19 +7,21 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "platforms": ["ios", "android", "web"],
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/rayoflight.png",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/rayoflight.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#09121C"
     },
     "ios": { "supportsTablet": true },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundColor": "#E6F4FE"
+        "foregroundImage": "./assets/images/rayoflight.png",
+        "backgroundColor": "#09121C"
       }
     },
-    "web": { "favicon": "./assets/images/favicon.png" }
+    "web": { 
+      "favicon": "./assets/images/rayoflight.png" 
+    }
   }
 }

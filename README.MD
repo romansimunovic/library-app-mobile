@@ -1,131 +1,107 @@
-# 🟩 BRAT. LIBRARY. APP.
+# 🌌 ETHEREAL. ARCHIVE.
 
-> **"READING. IS. SO. BRAT."**
+> **"Quicker than a ray of light, we are drifting into the digital consciousness."**
 
-A high-performance library management system built with **React Native** and **Spring Boot**, wrapped in the unapologetic, high-contrast aesthetic of Charli XCX’s *Brat* era. This isn't just a CRUD app; it's a statement.
-
----
-
-## 🟩 THE. VIBE.
-
-Forget boring, corporate library software. This application embraces **Gen Z pop culture** and "Brat Summer."
-
-* **Industrial.**
-* **Lime Green.**
-* **Unapologetic.**
-It’s about managing data with main character energy and high-fashion "anti-design."
+A transcendent library management ecosystem built with **React Native** and **Spring Boot**. This application is no longer just a tool; it is a digital sanctuary for the preservation of knowledge, inspired by the sonic and visual landscape of Madonna’s 1998 masterpiece, *Ray of Light*.
 
 ---
 
-## 🛠️ FEATURES. PERIOD.
+## 💎 THE. INSPIRATION.
 
-* **THE ARCHIVE** – A high-intensity `FlatList` with real-time book status.
-* **NEW ENTRIES** – A "File Update" style form with strict validation (letters only, no filler).
-* **VIBE SEARCH** – A blackout-style modal to find books instantly within the archive.
-* **GLITCH UI** – Anti-design elements: tilted status blocks, sharp corners, and neon shadows.
-* **REST INTEGRATION** – Fully connected to a **Spring Boot** REST API with **PostgreSQL**.
+The "Brat" era was a moment, but the **Archive** is forever. This version is a complete visual rebirth.
 
----
-
-## 🧪 THE. TECH. STACK.
-
-* **Frontend:** React Native + Expo Go
-* **Backend:** Spring Boot (Java)
-* **Database:** PostgreSQL
-* **Communication:** Axios + REST
-* **Design:** Custom "Brat" Tokens (theme.js)
-* **AI Collaborators:** Gemini 1.5 Flash / GPT-4o
+* **The Muse:** Madonna’s *Ray of Light*—an album that merged organic spirituality with futuristic electronic pulses.
+* **The Aesthetic:** Deep oceanic blues, shimmering ethereal highlights, and glassmorphism. It reflects the shift from "noise" to "clarity."
+* **The "Why":** To move away from the industrial and toward the atmospheric. It is designed for those who view their book collection as a personal constellation of stars.
 
 ---
 
-## 📁 PROJECT. STRUCTURE.
+## 🌊 THE. VIBE.
 
-```bash
-src/
- ├── api/          # Axios logic (The data pipeline)
- ├── components/   # BookItem (The modular UI card)
- ├── screens/      # Home, List, Detail, Form (The Viewports)
- ├── theme/        # theme.js (Design tokens & neon shadows)
- └── navigation/   # Stack & Tab logic
-App.js             # Root Navigation Container
-.env               # API_URL (The Gateway to the backend)
-
-```
+| Element | Philosophy |
+| --- | --- |
+| **Oceanic Depths** | Using `#09121C` and `#1A5F7A` to create a sense of infinite space. |
+| **Light Rays** | High-contrast neon-cyan (`#71B5D1`) shadows that mimic underwater light beams. |
+| **Glassmorphism** | UI components that feel like semi-transparent lenses, floating above the void. |
+| **Serenity** | Lowercase typography and wide letter spacing for a calm, curated experience. |
 
 ---
 
-## 💅 DESIGN. TOKENS. (theme.js)
+## 🕊️ THE. MANTRA.
 
-The app's identity is hardcoded into a modular theme. Instead of standard "Material Design," we use **sharp edges** and **aggressive colors**.
+> **"Preserve. Reflect. Manifest."**
 
-| Token | Value | Vibe |
-| --- | --- | --- |
-| **BRAT_GREEN** | `#89CC04` | High intensity neon |
-| **PITCH_BLACK** | `#0f0f0f` | Background depth |
-| **TEXT_PRIMARY** | `#ffffff` | Pure white |
-| **SHADOWS** | `6px offset` | Hard, industrial depth |
-
-> **Note:** We ditched `borderRadius` for the "Brat" look. The app uses `elevation: 8` on Android to simulate the neon green glow.
+This app is aimed at the **Modern Curator**—someone who seeks order in a chaotic world. It is for those who find peace in the architecture of a library and the fluid movement of clean data.
 
 ---
 
-## 🚀 BOOTING. UP.
+## 🛠️ FEATURES. REBORN.
 
-1. **Clone the repository:**
+* **THE CELESTIAL LIST** – A fluid `FlatList` with "Ethereal Glow" items that react to the touch.
+* **REFINING LIGHT** – A form that treats book entry like a ritual, featuring strict alphanumeric validation and atmospheric feedback.
+* **VIBE SEARCH** – A blurred, full-screen portal to find specific entries within your archive instantly.
+* **HAPTIC FEEDBACK** – Physical "pulses" when books are manifested (added) or released (deleted).
+* **PERSISTENT MEMORY** – Full synchronization with a **Spring Boot** backend and **PostgreSQL** archive.
+
+---
+
+## 🧬 TECH. ARCHITECTURE.
+
+* **Frontend:** React Native (Expo SDK 54)
+* **Animations:** `Animated` API for breathing headers and "Ray of Light" intro sequences.
+* **Visuals:** `expo-linear-gradient` and custom glassmorphism shadows.
+* **Backend:** Spring Boot REST API.
+* **State:** Integrated `useEffect` hooks for real-time synchronization.
+
+---
+
+## 🚀 AWAKENING. THE. APP.
+
+1. **Clone the digital DNA:**
 ```bash
 git clone <your-repo-link>
 
 ```
 
 
-2. **Install dependencies:**
+2. **Manifest Dependencies:**
 ```bash
 npm install
 
 ```
 
 
-3. **Configure the Environment:** Create a `.env` file in the root directory:
+3. **Sync the Gateway:** Create a `.env` file for your backend:
 ```env
 API_URL=http://192.168.x.x:8080/api
 
 ```
 
 
-4. **Launch Expo:**
+4. **Initiate Light:**
 ```bash
 npx expo start -c
 
 ```
 
 
-5. **Connect:** Ensure your phone is on the **same Wi-Fi network** as your backend server and scan the QR code via **Expo Go**.
 
 ---
 
-## 🚩 DEVELOPMENT. LOG.
+## 📔 DEVELOPMENT. NOTES. (THE JOURNEY)
 
-* **The "Double Fetch" Glitch:** Fixed duplicate API calls by combining `useEffect` navigation listeners.
-* **The Shadow Bug:** Android doesn't support blurred shadows well; implemented a **Hard Shadow** approach (`shadowOpacity: 1, shadowRadius: 0`) to match the industrial look.
-* **Bratty Validation:** Implemented regex that blocks numbers in Title/Author fields—keeping the data "clean" and consistent.
-* **Anti-Design:** Switched from `borderRadius: RADIUS.xl` to sharp corners to better reflect the album cover's aesthetic.
-
----
-
-## 🤖 AI. ROLE.
-
-This project utilized AI assistance for:
-
-* **Refactoring:** Converting a monolithic `App.js` into a clean, modular component-based architecture.
-* **Theme Engineering:** Translating the "Brat" aesthetic into a scalable `theme.js` file.
-* **Validation:** Creating "Bratty" error handling (e.g., `"WHO. WROTE. THIS?"` instead of `"Field required"`).
+* **The Transition:** We moved from sharp edges to `RADIUS.xl` (30px) to simulate the softness of the *Ray of Light* artwork.
+* **Visual Integrity:** Replaced the industrial "Brat Green" with a custom palette: **Ethereal Blue** and **Muted Silver**.
+* **The "Crc" Hurdle:** Overcame image corruption issues by re-baking assets to ensure the web-bundler could properly manifest the visual "rays."
+* **Validation:** Switched to "Ethereal Validation"—messages like `"manifestation failed"` replace generic errors to keep the user within the atmosphere.
 
 ---
 
-**Mentor:** Assistant Marko Buljan
+## 👤 THE. ARCHITECTS.
 
-**Course:** Programming 3 – Faculty of Humanities and Social Sciences, Osijek
+* **Project Lead:** Roman Šimunović
+* **Mentor:** Assistant Marko Buljan
+* **Inspiration:** Maverick Records / Madonna / William Orbit
+* **Institution:** Faculty of Humanities and Social Sciences, Osijek (Programming 3)
 
-**Project Lead:** Roman Šimunović
-
-**V1.0.0 — SO. BRAT.**
+**V1.0.0 — DRIFTING. INTO. LIGHT.**

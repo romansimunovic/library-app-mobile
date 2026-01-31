@@ -10,251 +10,219 @@ import {
   Keyboard,
   Alert,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { createBook, updateBook, getBookById, deleteBook } from '../api/api';
-import { COLORS, SPACING, RADIUS, SHADOW } from '../theme/theme';
+import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
+import { createBook, updateBook, getBookById } from '../api/api';
+import { COLORS, RADIUS, SHADOW, TYPOGRAPHY } from '../theme/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+/**
+ * Screen for manifesting new books or refining existing entries.
+ * Includes strict validation for Title, Author, ISBN, and Year.
+ */
 export default function BookFormScreen({ route, navigation }) {
+  const insets = useSafeAreaInsets();
   const bookId = route.params?.bookId;
 
+  // Form State
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [isbn, setIsbn] = useState('');
   const [publishedYear, setPublishedYear] = useState('');
   const [available, setAvailable] = useState(true);
 
-  const [originalData, setOriginalData] = useState({
-    title: '', author: '', isbn: '', publishedYear: '', available: true
-  });
-
-  const [errors, setErrors] = useState({
-    title: '', author: '', isbn: '', publishedYear: ''
-  });
-
   useEffect(() => {
-    if (bookId) {
-      getBookById(bookId)
-        .then(book => {
-          setTitle(book.title);
-          setAuthor(book.author);
-          setIsbn(book.isbn || '');
-          setPublishedYear(book.publishedYear?.toString() || '');
-          setAvailable(book.available);
+    navigation.setOptions({
+      headerTitle: '',
+      headerTransparent: true,
+      headerTintColor: COLORS.ethereal,
+    });
 
-          setOriginalData({
-            title: book.title,
-            author: book.author,
-            isbn: book.isbn || '',
-            publishedYear: book.publishedYear?.toString() || '',
-            available: book.available
-          });
-        })
-        .catch(err => Alert.alert('Oops!', err.message));
+    if (bookId) {
+      loadBookData();
     }
   }, [bookId]);
 
-  // --- HANDLER ZA GODINU ---
-  const handleYearChange = (text) => {
-  // dozvoli samo brojeve, bez minus
-  const filtered = text.replace(/[^0-9]/g, '');
-  setPublishedYear(filtered);
-};
-
-const validate = () => {
-  let newErrors = { title:'', author:'', isbn:'', publishedYear:'' };
-  let valid = true;
-  const currentYear = new Date().getFullYear();
-
-  if (!title.trim()) {
-    newErrors.title = "Oops! Books need a title.";
-    valid = false;
-  }
-
-  if (!author.trim()) {
-    newErrors.author = "Who wrote this? Fill in the author.";
-    valid = false;
-  }
-
-  if (isbn.trim() && !/^\d+$/.test(isbn.trim())) {
-    newErrors.isbn = "ISBN is numbers-only, buddy.";
-    valid = false;
-  }
-
-  if (publishedYear.trim()) {
-    const num = parseInt(publishedYear.trim());
-    if (isNaN(num) || num < 0 || num > currentYear) {
-      newErrors.publishedYear = `Year must be between 0 and ${currentYear}.`;
-      valid = false;
+  const loadBookData = async () => {
+    try {
+      const book = await getBookById(bookId);
+      setTitle(book.title);
+      setAuthor(book.author);
+      setIsbn(book.isbn || '');
+      setPublishedYear(book.publishedYear?.toString() || '');
+      setAvailable(book.available);
+    } catch (err) {
+      Alert.alert('Error', 'Could not retrieve book details.');
     }
-  }
+  };
 
-  setErrors(newErrors);
-  if (!valid) Alert.alert('Validation Error', 'Some fields need attention.');
-  return valid;
-};
+  /**
+   * Validates form inputs based on strict requirements:
+   * Title: Alphanumeric, Author: Alpha, ISBN: Numeric, Year: 0-2026.
+   */
+  const validateForm = () => {
+    const alphanumericRegex = /^[a-zA-Z0-9\s]+$/;
+    const alphaRegex = /^[a-zA-Z\sčćžšđČĆŽŠĐ]+$/;
+    const numericRegex = /^\d+$/;
+    const currentYear = 2026;
 
-  const dirty =
-    title !== originalData.title ||
-    author !== originalData.author ||
-    isbn !== originalData.isbn ||
-    publishedYear !== originalData.publishedYear ||
-    available !== originalData.available;
+    if (!title.trim() || !alphanumericRegex.test(title)) {
+      Alert.alert('Invalid Title', 'Title must contain only letters and numbers.');
+      return false;
+    }
+    if (!author.trim() || !alphaRegex.test(author)) {
+      Alert.alert('Invalid Author', 'Author name must contain only letters.');
+      return false;
+    }
+    if (!isbn.trim() || !numericRegex.test(isbn)) {
+      Alert.alert('Invalid ISBN', 'ISBN must contain only numbers.');
+      return false;
+    }
+    const yearNum = parseInt(publishedYear);
+    if (!publishedYear || isNaN(yearNum) || yearNum < 0 || yearNum > currentYear) {
+      Alert.alert('Invalid Year', `Year must be between 0 and ${currentYear}.`);
+      return false;
+    }
+    return true;
+  };
 
   const handleSave = async () => {
-    Keyboard.dismiss();
-    if (!validate()) return;
+    if (!validateForm()) return;
 
-    const bookRequest = { title: title.trim(), author: author.trim(), available };
-    if (isbn.trim()) bookRequest.isbn = isbn.trim();
-    if (publishedYear.trim()) bookRequest.publishedYear = parseInt(publishedYear);
+    const bookRequest = {
+      title: title.trim(),
+      author: author.trim(),
+      available,
+      isbn: isbn.trim(),
+      publishedYear: parseInt(publishedYear),
+    };
 
     try {
       if (bookId) {
         await updateBook(bookId, bookRequest);
-        Alert.alert('Success!', `Book "${title}" updated.`);
       } else {
         await createBook(bookRequest);
-        Alert.alert('Success!', `Book "${title}" added.`);
       }
-      navigation.goBack();
+      
+      // Trigger Haptics for physical feedback (mobile only)
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+
+      Alert.alert(
+        bookId ? 'Updated' : 'Manifested',
+        `The book has been successfully ${bookId ? 'refined' : 'added'}.`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     } catch (err) {
-      Alert.alert('Error', err.message);
+      Alert.alert('System Error', err.message);
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Confirm Deletion',
-      `Delete "${title}" forever?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: async () => {
-          try {
-            await deleteBook(bookId);
-            Alert.alert('Deleted!', `"${title}" removed.`);
-            navigation.goBack();
-          } catch(err) {
-            Alert.alert('Error', err.message);
-          }
-        }}
-      ]
-    );
-  };
-
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-        <Text style={styles.header}>{bookId ? 'Edit Book' : 'Add New Book'}</Text>
-
-        <Field
-          label="Title"
-          value={title}
-          onChangeText={setTitle}
-          error={errors.title}
-          placeholder="1984, Dune, React for Humans"
-        />
-
-        <Field
-          label="Author"
-          value={author}
-          onChangeText={setAuthor}
-          error={errors.author}
-          placeholder="George Orwell"
-        />
-
-        <Field
-          label="ISBN"
-          value={isbn}
-          onChangeText={setIsbn}
-          error={errors.isbn}
-          placeholder="Numbers only, no drama"
-          keyboardType="numeric"
-        />
-
-        <Field
-          label="Year"
-          value={publishedYear}
-          onChangeText={handleYearChange} // kontrolirani handler
-          error={errors.publishedYear}
-          placeholder="-400 or 2023"
-          keyboardType="default"
-        />
-
-        <View style={styles.switchGroup}>
-          <Text style={styles.switchLabel}>Available</Text>
-          <Switch value={available} onValueChange={setAvailable} />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.saveButton, !dirty && { opacity: 0.5 }]}
-          onPress={handleSave}
-          disabled={!dirty}
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      style={styles.flex}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 60 }]}
         >
-          <Text style={styles.saveButtonText}>{bookId ? 'Update Book' : 'Create Book'}</Text>
-        </TouchableOpacity>
+          <StatusBar style="light" />
+          <Text style={styles.headerText}>{bookId ? 'refining light' : 'new manifestation'}</Text>
 
-        {bookId && (
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Delete Book</Text>
+          <Field label="Title" value={title} onChangeText={setTitle} placeholder="Letters and numbers..." />
+          <Field label="Author" value={author} onChangeText={setAuthor} placeholder="Letters only..." />
+          <Field label="ISBN" value={isbn} onChangeText={setIsbn} placeholder="Numbers only..." keyboardType="numeric" />
+          <Field label="Year" value={publishedYear} onChangeText={setPublishedYear} placeholder="0 - 2026..." keyboardType="numeric" />
+
+          <View style={styles.switchGroup}>
+            <View>
+              <Text style={styles.switchLabel}>Available in Archive</Text>
+              <Text style={styles.switchSub}>{available ? 'Present' : 'Wandering'}</Text>
+            </View>
+            <Switch
+              value={available}
+              onValueChange={setAvailable}
+              trackColor={{ false: 'rgba(255,255,255,0.1)', true: COLORS.ethereal }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.saveButton, SHADOW.softGlow]}
+            onPress={handleSave}
+          >
+            <Text style={styles.saveButtonText}>{bookId ? 'UPDATE ENTRY' : 'MANIFEST BOOK'}</Text>
           </TouchableOpacity>
-        )}
-      </ScrollView>
-    </TouchableWithoutFeedback>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
-/* -------------------------
-   REUSABLE FIELD
-   ------------------------- */
-function Field({ label, error, onChangeText, ...props }) {
+/**
+ * Reusable Input Field Component
+ */
+function Field({ label, ...props }) {
   return (
     <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-
+      <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         {...props}
-        onChangeText={onChangeText}
-        style={[styles.input, error && styles.inputError]}
-        placeholderTextColor="#999"
+        style={styles.input}
+        placeholderTextColor="rgba(113, 181, 209, 0.4)"
+        selectionColor={COLORS.ethereal}
+        keyboardAppearance="dark"
       />
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor:COLORS.bg },
-  header: { fontSize:28, fontWeight:'800', color:'#fff', textAlign:'center', marginVertical:32 },
-  inputGroup: { marginBottom:24, paddingHorizontal:24 },
-  label: { fontSize:16, fontWeight:'600', color:'#a0a0cc', marginBottom:8 },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    paddingVertical:16,
-    paddingHorizontal:20,
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  scrollContent: { paddingBottom: 60 },
+  headerText: {
+    ...TYPOGRAPHY.header,
+    fontSize: 38,
     color: COLORS.text,
-    fontSize:16,
-    fontWeight:'700',
-    borderWidth:3,
-    borderColor: COLORS.border,
+    paddingHorizontal: 24,
+    marginBottom: 30,
+    fontWeight: '200',
   },
-  inputError: { borderColor:'#c00' },
-  errorText: { color:'#c00', marginTop:4 },
-  switchGroup:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:24, marginBottom:40 },
-  switchLabel:{ fontSize:16, fontWeight:'600', color:'#a0a0cc' },
+  inputGroup: { marginBottom: 20, paddingHorizontal: 24 },
+  fieldLabel: { ...TYPOGRAPHY.ethereal, fontSize: 10, color: COLORS.ethereal, marginBottom: 8, textTransform: 'uppercase' },
+  input: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: RADIUS.md,
+    padding: 16,
+    color: COLORS.text,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(113, 181, 209, 0.15)',
+  },
+  switchGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginVertical: 20,
+  },
+  switchLabel: { ...TYPOGRAPHY.ethereal, color: COLORS.text, fontSize: 13 },
+  switchSub: { ...TYPOGRAPHY.ethereal, color: COLORS.muted, fontSize: 10 },
   saveButton: {
-    backgroundColor: COLORS.brat,
-    marginHorizontal: SPACING.lg,
+    backgroundColor: COLORS.ethereal,
+    marginHorizontal: 24,
     borderRadius: RADIUS.xl,
-    paddingVertical:18,
-    alignItems:'center',
-    borderWidth:3,
-    borderColor: COLORS.border,
-    ...SHADOW.brat,
+    paddingVertical: 18,
+    alignItems: 'center',
+    marginTop: 20,
   },
-  saveButtonText: { color:'#fff', fontSize:18, fontWeight:'700' },
-  deleteButton:{ backgroundColor:'#721c24', marginHorizontal:24, borderRadius:16, paddingVertical:18, alignItems:'center', marginTop:8 },
-  deleteButtonText:{ color:'#fff', fontSize:18, fontWeight:'700' },
+  saveButtonText: { color: COLORS.bg, fontWeight: '700', fontSize: 14, letterSpacing: 1.5 },
 });

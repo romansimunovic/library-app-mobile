@@ -10,34 +10,35 @@ import BookFormScreen from '../screens/BookFormScreen';
 
 const Stack = createNativeStackNavigator();
 
-const BratTheme = {
-  ...DarkTheme,
+const RayOfLightTheme = {
+  ...DarkTheme, 
   colors: {
     ...DarkTheme.colors,
     background: COLORS.bg,
     card: COLORS.surface,
     text: COLORS.text,
     border: COLORS.border,
-    primary: COLORS.brat,
+    primary: COLORS.ethereal,
   },
-};
+}
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer theme={BratTheme}>
+   <NavigationContainer theme={RayOfLightTheme}>
       <Stack.Navigator
         initialRouteName="BookHome"
         screenOptions={{
           headerStyle: {
             backgroundColor: COLORS.surface,
-            borderBottomWidth: 3,
-            borderBottomColor: COLORS.border,
+            elevation: 0, // Remove shadow for flat look
+            shadowOpacity: 0,
           },
           headerTitleStyle: {
-            fontWeight: '900',
-            letterSpacing: -0.5,
+            fontWeight: '300',
+            letterSpacing: 1,
+            color: COLORS.text,
           },
-          headerTintColor: COLORS.brat,
+          headerTintColor: COLORS.ethereal,
           contentStyle: {
             backgroundColor: COLORS.bg,
           },
