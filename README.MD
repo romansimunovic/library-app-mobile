@@ -89,7 +89,7 @@ npx expo start -c
 
 
 
-Developed by Roman Šimunović using AI tools (ChatGPT, Perplexity and Gemini) • Programming 3 • Osijek
+Developed by student Roman Šimunović using AI tools (ChatGPT, Perplexity and Gemini) • Course: Programming 3 • Faculty of Humanities and Social Sciences Osijek
 </p>
 
 ---
