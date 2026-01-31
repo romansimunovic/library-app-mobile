@@ -3,8 +3,10 @@
 <p align="center">
   <img src="https://m.media-amazon.com/images/I/61IwmGWFefL.jpg" width="400" alt="Madonna - Ray of Light Inspiration">
 </p>
-**"Quicker than a ray of light, we are drifting into the digital consciousness."**
 
+"Quicker than a ray of light, we are drifting into the digital consciousness."
+
+A transcendent library management ecosystem built with React Native and Spring Boot. This application is no longer just a tool; it is a digital sanctuary for the preservation of knowledge, inspired by the sonic and visual landscape of Madonna’s 1998 masterpiece, Ray of Light.
 ---
 
 ## 💎 THE. INSPIRATION.
