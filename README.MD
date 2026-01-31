@@ -14,7 +14,7 @@
 
 ### 🕊️ THE. MANIFESTO.
 
-The **Archive** is a digital sanctuary for the preservation of knowledge, inspired by the sonic and visual landscape of Madonna’s 1998 masterpiece, *Ray of Light*. It marks a transition from the chaotic industrial energy of "Brat" to a state of **Technological Zen**.
+The **Archive** is a digital sanctuary for the preservation of knowledge, inspired by the sonic and visual landscape of Madonna’s 1998 masterpiece, *Ray of Light*.
 
 * **The Muse:** A fusion of organic spirituality and futuristic electronic pulses.
 * **The Aesthetic:** Deep oceanic blues, shimmering highlights, and glassmorphism.
