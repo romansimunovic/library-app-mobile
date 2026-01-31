@@ -1,14 +1,13 @@
-# 🌌 ETHEREAL. ARCHIVE.
-
-<p align="center">
-<img src="[https://m.media-amazon.com/images/I/61IwmGWFefL.jpg](https://m.media-amazon.com/images/I/61IwmGWFefL.jpg)" width="450" style="border-radius: 20px; border: 1px solid #71B5D1; box-shadow: 0 0 25px rgba(113, 181, 209, 0.4);" alt="Ray of Light Inspiration">
+🌌 ETHEREAL. ARCHIVE.
+<p align="center"> <img src="https://m.media-amazon.com/images/I/61IwmGWFefL.jpg" width="450" style="border-radius: 30px;" alt="Madonna - Ray of Light Inspiration">
 
 
 
+<img src="https://img.shields.io/badge/Vibe-Ethereal-71B5D1?style=for-the-badge" /> <img src="https://img.shields.io/badge/Status-Manifesting-white?style=for-the-badge" />
 
 
-<i>"Quicker than a ray of light, we are drifting into the digital consciousness."</i>
-</p>
+<i>"Quicker than a ray of light, we are drifting into the digital consciousness."</i> </p>
+
 
 ---
 
